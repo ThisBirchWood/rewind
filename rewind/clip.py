@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from datetime import datetime
-from rewind.video import clip
+from rewind.video import save
 
 import obsws_python as obs
 import sys, argparse
@@ -15,10 +15,10 @@ def stop_recording(con):
     con.stop_record()
     print("Stopped recording")
 
-def create_clip(con):
+def create_recording(con):
     record_dir = con.get_record_directory()
     output_file_name = f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}.mp4"
-    clip(record_dir.record_directory, output_file_name)
+    save(record_dir.record_directory, output_file_name)
     print(f"Created clip: {output_file_name}")
 
 def build_parser():
@@ -31,7 +31,7 @@ def build_parser():
 
     sub.add_parser("start", help="Start OBS recording")
     sub.add_parser("stop", help="Stop OBS recording")
-    sub.add_parser("clip", help="Create a clip from the current recording")
+    sub.add_parser("save", help="Save a section from the current recording")
 
     return parser
 
@@ -46,8 +46,8 @@ def main(argv=None):
             start_recording(con)
         elif args.command == "stop":
             stop_recording(con)
-        elif args.command == "clip":
-            create_clip(con)
+        elif args.command == "save":
+            create_recording(con)
         else:
             parser.error("Unknown command")
 
