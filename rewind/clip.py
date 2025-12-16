@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from datetime import datetime
 from video import clip
 
@@ -20,7 +21,7 @@ elif command == "clip":
     record_dir = con.get_record_directory()
     output_file_name = f"{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}.mp4"
     clip(record_dir.record_directory, output_file_name)
-    
+
     print(f"Created clip: {output_file_name}")
 else:
     print("Unknown command. Use 'start', 'stop', or 'clip'.")
