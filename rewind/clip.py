@@ -4,8 +4,6 @@ from rewind.video import save, clean_old_ts_files
 import obsws_python as obs
 import sys, argparse
 
-command = sys.argv[1] if len(sys.argv) > 1 else None
-
 def start_recording(con):
     con.start_record()
     print("Started recording")
@@ -15,10 +13,9 @@ def stop_recording(con):
     clean_old_ts_files(con.get_record_directory().record_directory, max_age_seconds=0)
     print("Stopped recording")
 
-def create_recording(con):
-    record_dir = con.get_record_directory()
+def create_recording(seconds):
     output_file_name = f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}.mp4"
-    save(record_dir.record_directory, output_file_name)
+    save(seconds, output_file_name)
     print(f"Created clip: {output_file_name}")
 
 def build_parser():
@@ -31,7 +28,13 @@ def build_parser():
 
     sub.add_parser("start", help="Start OBS recording")
     sub.add_parser("stop", help="Stop OBS recording")
-    sub.add_parser("save", help="Save a section from the current recording")
+    save = sub.add_parser("save", help="Save a section from the current recording")
+    save.add_argument(
+        "-s", "--seconds",
+        type=int,
+        default=30,
+        help="Number of seconds to include in the clip (default: 30)"
+    )
 
     return parser
 
@@ -39,20 +42,11 @@ def main(argv=None):
     parser = build_parser()
     args = parser.parse_args(argv)
 
-    con = obs.ReqClient()
+    if args.command == "save":
+        create_recording(args.seconds)
+    else:
+        parser.error("Unknown command")
 
-    try:
-        if args.command == "start":
-            start_recording(con)
-        elif args.command == "stop":
-            stop_recording(con)
-        elif args.command == "save":
-            create_recording(con)
-        else:
-            parser.error("Unknown command")
-
-    finally:
-        con.disconnect()
 
 
 if __name__ == "__main__":
