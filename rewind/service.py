@@ -7,10 +7,10 @@ import subprocess
 import json
 
 from video import get_duration
+from paths import load_state, write_state
 
 INTERVAL = 10
 MAX_AGE_SECONDS = 60 * 60 * 8
-STATE_FILE = "state.json"
 
 def open_obs():
     subprocess.Popen(["obs", "--minimize-to-tray"])
@@ -36,46 +36,52 @@ def cleanup_old_files(directory, max_age_seconds):
         file_path = os.path.join(directory, filename)
         if os.path.isfile(file_path):
             file_age = datetime.datetime.now().timestamp() - os.path.getmtime(file_path)
-            if file_age > max_age_seconds:
+            if file_age > max_age_seconds and filename.endswith(".ts"):
                 os.remove(file_path)
                 print(f"Removed old file: {file_path}")
 
+
+def create_state_file():
+    state = {"files": []}
+    write_state(state)
+
 def add_file_to_state(file_path):
-    state = {}
-    if os.path.exists(STATE_FILE):
-        state = json.load(open(STATE_FILE))
+    state = load_state()
     files = state.get("files", [])
 
-    if len(files) > 0:
-        files[len(files)-1][1] = get_duration(files[len(files)-1][0])
+    # Update duration of last file if exists 
+    if files and len(files) > 0:
+        last_file = files[-1]
+        last_file["duration"] = get_duration(last_file["path"])
 
-    files.append([file_path, 0.0])
-    json.dump(state, open(STATE_FILE, "w"))
+    files.append({
+        "path": file_path,
+        "duration": 0.0
+    })
 
+    state["files"] = files
+    write_state(state)
 
 def main():
     open_obs()
     time.sleep(5)
-
     con = open_obs_connection()
     if con is None:
         return
-    
     recording_dir = con.get_record_directory().record_directory
     start_recording(con)
 
-    # create state file
-    state = {
-        "files": []
-    }
-    json.dump(state, open(STATE_FILE, "w"))
+    create_state_file()
 
     current_files = os.listdir(recording_dir)
 
     while True:
         cleanup_old_files(recording_dir, MAX_AGE_SECONDS)
+
         new_files = os.listdir(recording_dir)
         added_files = set(new_files) - set(current_files)
+
+        # Add new files to state
         for filename in added_files:
             file_path = os.path.join(recording_dir, filename)
             add_file_to_state(file_path)
@@ -84,7 +90,6 @@ def main():
         current_files = new_files
         time.sleep(INTERVAL)
 
-    end_recording(con)
     stop_recording(con)
     con.disconnect()
 
