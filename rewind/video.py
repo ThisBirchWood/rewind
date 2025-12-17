@@ -1,11 +1,9 @@
 import os, subprocess, datetime, json
 
-from rewind.paths import get_state_file
-
-STATE_FILE = get_state_file()
+from rewind.paths import load_state
 
 def save(seconds, output_file):
-    ts_files = STATE_FILE.get("files", [])
+    ts_files = load_state().get("files", [])
     ts_files[-1]["duration"] = get_duration(ts_files[-1]["path"])
 
     total_duration = 0.0

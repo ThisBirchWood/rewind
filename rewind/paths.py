@@ -13,9 +13,9 @@ def get_state_file_path() -> Path:
     return state_dir() / "state.json"
 
 def load_state() -> dict:
-    if not get_state_file_path.exists():
+    if not get_state_file_path().exists():
         return {"files": []}
-    with get_state_file_path.open() as f:
+    with get_state_file_path().open() as f:
         return json.load(f)
 
 def write_state(state: dict):
