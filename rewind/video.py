@@ -1,12 +1,28 @@
-import os, subprocess, datetime
+import os, subprocess, datetime, json
 
-def combine_ts_to_mp4(ts_files, output_file):
-    # FFMPEG requires a text file with the list of files to concatenate
+from rewind.paths import get_state_file
+
+STATE_FILE = get_state_file()
+
+def save(seconds, output_file):
+    ts_files = STATE_FILE.get("files", [])
+    ts_files[-1]["duration"] = get_duration(ts_files[-1]["path"])
+
+    total_duration = 0.0
+    files_to_include = []
+    
+    while ts_files and total_duration < seconds:
+        ts_file = ts_files.pop()
+        files_to_include.append(ts_file["path"])
+        total_duration += ts_file["duration"]
+
+    files_to_include.reverse()
     with open("file_list.txt", "w") as f:
-        for ts in ts_files:
-            f.write(f"file '{ts}'\n")
+        for file_path in files_to_include:
+            f.write(f"file '{file_path}'\n")
 
     subprocess.run(["ffmpeg", "-y", 
+                    "-ss", str(max(0, total_duration - seconds)),
                     "-f", "concat", "-safe", "0", "-i", 
                     "file_list.txt", 
                     "-c", "copy", 
@@ -24,10 +40,12 @@ def clean_old_ts_files(record_dir, max_age_seconds=60*60*3):
                 os.remove(file_path)
                 print(f"Deleted old file: {file_path}")
 
-def save(record_dir, output_file_name):
-    # Gather all ts files and combine them into a single mp4
-    ts_files = [f for f in os.listdir(record_dir) if f.endswith(".ts")]
-    ts_files.sort(key=lambda x: os.path.getmtime(os.path.join(record_dir, x)))
-
-    combine_ts_to_mp4([os.path.join(record_dir, f) for f in ts_files], output_file_name)
-    clean_old_ts_files(record_dir)
+def get_duration(file_path):
+    result = subprocess.run(
+        ["ffprobe", "-v", "error", "-show_entries",
+         "format=duration", "-of",
+         "default=noprint_wrappers=1:nokey=1", file_path],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT
+    )
+    return float(result.stdout)
