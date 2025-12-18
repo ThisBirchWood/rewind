@@ -3,3 +3,4 @@ config.toml
 *.mp4
 __pycache__/
 rewind.egg-info/
+markers.json
