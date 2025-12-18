@@ -6,11 +6,11 @@ import obsws_python as obs
 import subprocess
 import json
 
-from video import get_duration
-from paths import load_state, write_state
+from rewind.video import get_duration
+from rewind.paths import load_state, write_state
 
 INTERVAL = 10
-MAX_AGE_SECONDS = 60 * 60 * 8
+MAX_AGE_SECONDS = 60 * 60 * 1
 
 def open_obs():
     subprocess.Popen(["obs", "--minimize-to-tray"])
