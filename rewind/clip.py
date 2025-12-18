@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-from datetime import datetime
 from rewind.video import clip
-import obsws_python as obs
 import sys, argparse
 
 def build_parser() -> argparse.ArgumentParser:

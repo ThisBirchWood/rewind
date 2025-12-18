@@ -28,8 +28,8 @@ def combine_last_x_ts_files(seconds: float, output_file: str) -> None:
     
     os.remove("file_list.txt")
 
-def clip(seconds_from_end: float, output_file: str) -> None:
-    output_file_name = f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}.mp4"
+def clip(seconds_from_end: float) -> None:
+    output_file_name = f"{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}.mp4"
     combine_last_x_ts_files(seconds_from_end, output_file_name)
     print(f"Created clip: {output_file_name}")
 
