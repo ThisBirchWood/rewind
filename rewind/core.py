@@ -35,33 +35,32 @@ def get_ts_files(start_timestamp: float, end_timestamp: float) -> tuple[list[str
 
     return selected_files, start_offset, end_offset
 
-
-def combine_last_x_ts_files(seconds: float, output_file: str) -> None:
-    ts_files = load_state()["files"]
-
-    files, start_offset, end_offset = get_ts_files(
-        datetime.datetime.now().timestamp() - seconds,
-        datetime.datetime.now().timestamp()
-    )
-
-    print(f"Combining files: {files} with start offset {start_offset} and end offset {end_offset}")
-
+def concat_ts_files(file_list: list[str], start_offset: float, end_offset: float, output_file: str) -> None:
     with open("file_list.txt", "w") as f:
-        for file_path in files:
+        for file_path in file_list:
             f.write(f"file '{file_path}'\n")
 
-    subprocess.run(["ffmpeg", "-y", 
-                    "-ss", str(start_offset),
-                    "-f", "concat", "-safe", "0", "-i", 
-                    "file_list.txt", 
-                    "-c", "copy", 
-                    output_file])
-    
+    cmd = ["ffmpeg", "-y"]
+    if start_offset > 0:
+        cmd += ["-ss", str(start_offset)]
+    cmd += ["-f", "concat", "-safe", "0", "-i", "file_list.txt", "-c", "copy"]
+    if end_offset > 0:
+        cmd += ["-t", str(get_duration(file_list[-1]) - end_offset - (start_offset if len(file_list) == 1 else 0))]
+    cmd.append(output_file)
+
+    subprocess.run(cmd)
     os.remove("file_list.txt")
 
 def clip(seconds_from_end: float) -> None:
     output_file_name = f"{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}.mp4"
-    combine_last_x_ts_files(seconds_from_end, output_file_name)
+    
+    files, start_offset, end_offset = get_ts_files(
+        start_timestamp=datetime.datetime.now().timestamp() - seconds_from_end,
+        end_timestamp=datetime.datetime.now().timestamp()
+    )
+    print(f"files: {files}, start_offset: {start_offset}, end_offset: {end_offset}")
+    concat_ts_files(files, start_offset, end_offset, output_file_name)
+
     print(f"Created clip: {output_file_name}")
 
 def mark(name: str) -> None:
@@ -97,6 +96,20 @@ def print_markers() -> None:
     for marker in markers:
         format_time = datetime.datetime.fromtimestamp(marker['timestamp']).strftime('%Y-%m-%d %H:%M:%S')
         print(f"{format_time} -> {marker['name']}")
+
+def clean_old_markers() -> None:
+    markers_file = os.path.join(os.path.dirname(__file__), "markers.json")
+    if not os.path.exists(markers_file):
+        return
+
+    with open(markers_file, "r") as f:
+        markers = json.load(f)
+
+    current_time = datetime.datetime.now().timestamp()
+    markers = [m for m in markers if current_time - m['timestamp'] <= 60]
+
+    with open(markers_file, "w") as f:
+        json.dump(markers, f, indent=4)
 
 def get_duration(file_path: str) -> float:
     result = subprocess.run(
