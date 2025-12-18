@@ -44,9 +44,9 @@ def concat_ts_files(file_list: list[str], start_offset: float, end_offset: float
     cmd = ["ffmpeg", "-y"]
     if start_offset > 0:
         cmd += ["-ss", str(start_offset)]
-    cmd += ["-f", "concat", "-safe", "0", "-i", "file_list.txt", "-c", "copy"]
     if end_offset > 0:
-        cmd += ["-t", str(get_duration(file_list[-1]) - end_offset - (start_offset if len(file_list) == 1 else 0))]
+        cmd += ["-sseof", str(end_offset)]
+    cmd += ["-f", "concat", "-safe", "0", "-i", "file_list.txt", "-c", "copy"]
     cmd.append(output_file)
 
     subprocess.run(cmd)
@@ -63,6 +63,21 @@ def clip(seconds_from_end: float) -> None:
     concat_ts_files(files, start_offset, end_offset, output_file_name)
 
     print(f"Created clip: {output_file_name}")
+
+def save(first_marker: str, second_marker: str):
+    output_file_name = f"{first_marker}-{second_marker}-{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}.mp4"
+    first_timestamp = get_marker_timestamp(first_marker)
+    second_timestamp = get_marker_timestamp(second_marker)
+
+    files, start_offset, end_offset = get_ts_files(
+        first_timestamp,
+        second_timestamp
+    )
+
+    print(f"{files} -> {start_offset} -> {end_offset}")
+
+    concat_ts_files(files, start_offset, end_offset, output_file_name)
+    print(f"Created file: {output_file_name}")
 
 def mark(name: str) -> None:
     if not name:
@@ -84,6 +99,21 @@ def mark(name: str) -> None:
     with open(markers_file, "w") as f:
         json.dump(markers, f, indent=4)
     print(f"Added marker: {name}")
+
+def get_marker_timestamp(name: str) -> float:
+    markers_file = os.path.join(os.path.dirname(__file__), "markers.json")
+    if not os.path.exists(markers_file):
+        print("No markers found.")
+        return
+
+    with open(markers_file, "r") as f:
+        markers = json.load(f)
+
+    for marker in markers:
+        if marker["name"] == name:
+            return marker["timestamp"]
+    
+    raise ValueError("Marker name does not exist")
 
 def print_markers() -> None:
     clean_old_markers(load_config()["record"]["max_record_time"])

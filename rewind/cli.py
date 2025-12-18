@@ -1,15 +1,32 @@
 #!/usr/bin/env python3
 import sys
 import argparse
-from rewind.core import clip, mark, print_markers
 
-def build_save_parser(subparsers: argparse._SubParsersAction) -> None:
-    save_parser = subparsers.add_parser("save", help="Save a section from the current recording")
-    save_parser.add_argument(
+from rewind.core import clip, mark, save, print_markers
+
+def build_clip_parser(subparsers: argparse._SubParsersAction) -> None:
+    clip_parser = subparsers.add_parser("clip", help="Clips the last 'x' seconds")
+    clip_parser.add_argument(
         "-s", "--seconds",
         type=int,
         default=30,
         help="Number of seconds to include in the clip (default: 30)"
+    )
+
+def build_save_parser(subparsers: argparse._SubParsersAction) -> None:
+    save_parser = subparsers.add_parser("save", help="Saves a segment between any two markers")
+    save_parser.add_argument(
+        "-s", "--start",
+        type=str,
+        required=True,
+        help="Marker to begin the recording from"
+    )
+
+    save_parser.add_argument(
+        "-e", "--end",
+        type=str,
+        required=True,
+        help="Marker to end the recording from"
     )
 
 def build_mark_parser(subparsers: argparse._SubParsersAction) -> None:
@@ -32,9 +49,10 @@ def build_parser() -> argparse.ArgumentParser:
 
     sub = parser.add_subparsers(dest="command", required=True)
 
-    build_save_parser(sub)
+    build_clip_parser(sub)
     build_mark_parser(sub)
     build_list_parser(sub)
+    build_save_parser(sub)
 
     return parser
 
@@ -42,12 +60,14 @@ def main(argv=None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
 
-    if args.command == "save":
+    if args.command == "clip":
         clip(args.seconds)
     elif args.command == "mark":
         mark(args.name)
     elif args.command == "list":
         print_markers()
+    elif args.command == "save":
+        save(args.start, args.end)
     else:
         parser.error("Unknown command")
 

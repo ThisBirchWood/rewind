@@ -6,7 +6,6 @@ import time
 import obsws_python as obs
 import subprocess
 
-from rewind.core import get_duration
 from rewind.paths import load_state, write_state, load_config
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
