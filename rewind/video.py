@@ -2,7 +2,7 @@ import os, subprocess, datetime, json
 
 from rewind.paths import load_state
 
-def save(seconds, output_file):
+def combine_last_x_ts_files(seconds: float, output_file: str) -> None:
     ts_files = load_state().get("files", [])
     ts_files[-1]["duration"] = get_duration(ts_files[-1]["path"])
 
@@ -28,17 +28,7 @@ def save(seconds, output_file):
     
     os.remove("file_list.txt")
 
-def clean_old_ts_files(record_dir, max_age_seconds=60*60*3):
-    current_time = datetime.datetime.now().timestamp()
-    for filename in os.listdir(record_dir):
-        if filename.endswith(".ts"):
-            file_path = os.path.join(record_dir, filename)
-            file_age = current_time - os.path.getmtime(file_path)
-            if file_age > max_age_seconds:
-                os.remove(file_path)
-                print(f"Deleted old file: {file_path}")
-
-def get_duration(file_path):
+def get_duration(file_path: str) -> float:
     result = subprocess.run(
         ["ffprobe", "-v", "error", "-show_entries",
          "format=duration", "-of",

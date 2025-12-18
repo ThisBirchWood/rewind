@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from datetime import datetime
-from rewind.video import save, clean_old_ts_files
+from rewind.video import combine_last_x_ts_files
 import obsws_python as obs
 import sys, argparse
 
@@ -10,12 +10,11 @@ def start_recording(con):
 
 def stop_recording(con):
     con.stop_record()
-    clean_old_ts_files(con.get_record_directory().record_directory, max_age_seconds=0)
     print("Stopped recording")
 
 def create_recording(seconds):
     output_file_name = f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}.mp4"
-    save(seconds, output_file_name)
+    combine_last_x_ts_files(seconds, output_file_name)
     print(f"Created clip: {output_file_name}")
 
 def build_parser():
