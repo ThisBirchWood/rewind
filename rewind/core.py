@@ -45,7 +45,7 @@ def concat_ts_files(file_list: list[str], start_offset: float, end_offset: float
     if start_offset > 0:
         cmd += ["-ss", str(start_offset)]
     if end_offset > 0:
-        cmd += ["-sseof", str(length)]
+        cmd += ["-t", str(length)]
     cmd += ["-f", "concat", "-safe", "0", "-i", "file_list.txt", "-c", "copy"]
     cmd.append(output_file)
 

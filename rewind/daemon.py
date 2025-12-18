@@ -11,7 +11,6 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
 INTERVAL = 10
-MAX_AGE_SECONDS = 60 * 60 * 1
 running = True
 
 def open_obs():
