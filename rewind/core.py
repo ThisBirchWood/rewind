@@ -3,7 +3,8 @@ import os
 import datetime
 import subprocess
 import json
-from rewind.paths import load_state
+
+from rewind.paths import load_state, load_config
 
 """
 Retrieves .ts files recorded between the specified timestamps.
@@ -85,6 +86,8 @@ def mark(name: str) -> None:
     print(f"Added marker: {name}")
 
 def print_markers() -> None:
+    clean_old_markers(load_config()["record"]["max_record_time"])
+
     markers_file = os.path.join(os.path.dirname(__file__), "markers.json")
     if not os.path.exists(markers_file):
         print("No markers found.")
@@ -97,7 +100,7 @@ def print_markers() -> None:
         format_time = datetime.datetime.fromtimestamp(marker['timestamp']).strftime('%Y-%m-%d %H:%M:%S')
         print(f"{format_time} -> {marker['name']}")
 
-def clean_old_markers() -> None:
+def clean_old_markers(max_age_seconds: float) -> None:
     markers_file = os.path.join(os.path.dirname(__file__), "markers.json")
     if not os.path.exists(markers_file):
         return
@@ -106,7 +109,7 @@ def clean_old_markers() -> None:
         markers = json.load(f)
 
     current_time = datetime.datetime.now().timestamp()
-    markers = [m for m in markers if current_time - m['timestamp'] <= 60]
+    markers = [m for m in markers if current_time - m['timestamp'] <= max_age_seconds]
 
     with open(markers_file, "w") as f:
         json.dump(markers, f, indent=4)

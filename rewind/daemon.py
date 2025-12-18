@@ -100,7 +100,7 @@ def main() -> None:
         observer.start()
 
         while running:
-            cleanup_old_files(recording_dir, MAX_AGE_SECONDS)
+            cleanup_old_files(recording_dir, config["record"]["max_record_time"])
             time.sleep(INTERVAL)
     finally:
         stop_recording(con)
