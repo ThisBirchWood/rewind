@@ -6,9 +6,9 @@ import time
 import obsws_python as obs
 import subprocess
 
-from rewind.paths import load_state, write_state, load_config
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
+from rewind.paths import load_state, write_state, load_config
 
 INTERVAL = 10
 running = True

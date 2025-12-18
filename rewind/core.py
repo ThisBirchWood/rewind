@@ -63,9 +63,8 @@ def clip(seconds_from_end: float) -> None:
         start_timestamp,
         end_timestamp
     )
-    print(f"files: {files}, start_offset: {start_offset}, end_offset: {end_offset}")
-    concat_ts_files(files, start_offset, end_offset, length, output_file_name)
 
+    concat_ts_files(files, start_offset, end_offset, length, output_file_name)
     print(f"Created clip: {output_file_name}")
 
 def save(first_marker: str, second_marker: str):
@@ -82,7 +81,7 @@ def save(first_marker: str, second_marker: str):
     )
 
     concat_ts_files(files, start_offset, end_offset, second_timestamp - first_timestamp, output_file_name)
-    print(f"Created file: {output_file_name}")
+    print(f"Created video file: {output_file_name}")
 
 def mark(name: str) -> None:
     if not name:
@@ -103,6 +102,7 @@ def mark(name: str) -> None:
 
     with open(markers_file, "w") as f:
         json.dump(markers, f, indent=4)
+
     print(f"Added marker: {name}")
 
 def get_marker_timestamp(name: str) -> float:
