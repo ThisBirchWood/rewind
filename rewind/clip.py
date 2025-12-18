@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
+import sys
+import argparse
 from rewind.video import clip
-import sys, argparse
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(

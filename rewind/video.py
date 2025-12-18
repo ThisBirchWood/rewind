@@ -1,5 +1,7 @@
-import os, subprocess, datetime
-
+#!/usr/bin/env python3
+import os
+import datetime
+import subprocess
 from rewind.paths import load_state
 
 def combine_last_x_ts_files(seconds: float, output_file: str) -> None:

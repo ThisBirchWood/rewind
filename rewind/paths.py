@@ -1,5 +1,8 @@
+#!/usr/bin/env python3
+import os
+import json
+import tomllib
 from pathlib import Path
-import os, json, tomllib
 from importlib import resources
 
 APP_NAME = "rewind"
