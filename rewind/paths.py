@@ -18,7 +18,7 @@ def load_state() -> dict:
     with get_state_file_path().open() as f:
         return json.load(f)
 
-def write_state(state: dict):
+def write_state(state: dict) -> None:
     tmp = get_state_file_path().with_suffix(".tmp")
     with tmp.open("w") as f:
         json.dump(state, f, indent=2)

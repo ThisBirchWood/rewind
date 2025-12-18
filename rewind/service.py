@@ -4,7 +4,6 @@ import datetime
 import time
 import obsws_python as obs
 import subprocess
-import json
 
 from rewind.video import get_duration
 from rewind.paths import load_state, write_state
@@ -23,15 +22,15 @@ def open_obs_connection() -> obs.ReqClient | None:
         print("Could not connect to OBS. Is it running and is the WebSocket server enabled?")
         return None
 
-def start_recording(con):
+def start_recording(con: obs.ReqClient) -> None:
     con.start_record()
     print("Started recording")
 
-def stop_recording(con):
+def stop_recording(con: obs.ReqClient) -> None:
     con.stop_record()
     print("Stopped recording")
 
-def cleanup_old_files(directory, max_age_seconds):
+def cleanup_old_files(directory: str, max_age_seconds: int) -> None:
     for filename in os.listdir(directory):
         file_path = os.path.join(directory, filename)
         if os.path.isfile(file_path):
@@ -41,11 +40,11 @@ def cleanup_old_files(directory, max_age_seconds):
                 print(f"Removed old file: {file_path}")
 
 
-def create_state_file():
+def create_state_file() -> None:
     state = {"files": []}
     write_state(state)
 
-def add_file_to_state(file_path):
+def add_file_to_state(file_path: str) -> None:
     state = load_state()
     files = state.get("files", [])
 
@@ -62,7 +61,7 @@ def add_file_to_state(file_path):
     state["files"] = files
     write_state(state)
 
-def main():
+def main() -> None:
     open_obs()
     time.sleep(5)
     con = open_obs_connection()
