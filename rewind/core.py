@@ -36,7 +36,7 @@ def get_ts_files(start_timestamp: float, end_timestamp: float) -> tuple[list[str
 
     return selected_files, start_offset, end_offset
 
-def concat_ts_files(file_list: list[str], start_offset: float, end_offset: float, output_file: str) -> None:
+def concat_ts_files(file_list: list[str], start_offset: float, end_offset: float, length: float, output_file: str) -> None:
     with open("file_list.txt", "w") as f:
         for file_path in file_list:
             f.write(f"file '{file_path}'\n")
@@ -45,7 +45,7 @@ def concat_ts_files(file_list: list[str], start_offset: float, end_offset: float
     if start_offset > 0:
         cmd += ["-ss", str(start_offset)]
     if end_offset > 0:
-        cmd += ["-sseof", str(end_offset)]
+        cmd += ["-sseof", str(length)]
     cmd += ["-f", "concat", "-safe", "0", "-i", "file_list.txt", "-c", "copy"]
     cmd.append(output_file)
 
@@ -54,13 +54,17 @@ def concat_ts_files(file_list: list[str], start_offset: float, end_offset: float
 
 def clip(seconds_from_end: float) -> None:
     output_file_name = f"{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}.mp4"
+
+    start_timestamp = datetime.datetime.now().timestamp() - seconds_from_end
+    end_timestamp = datetime.datetime.now().timestamp()
+    length = end_timestamp - start_timestamp
     
     files, start_offset, end_offset = get_ts_files(
-        start_timestamp=datetime.datetime.now().timestamp() - seconds_from_end,
-        end_timestamp=datetime.datetime.now().timestamp()
+        start_timestamp,
+        end_timestamp
     )
     print(f"files: {files}, start_offset: {start_offset}, end_offset: {end_offset}")
-    concat_ts_files(files, start_offset, end_offset, output_file_name)
+    concat_ts_files(files, start_offset, end_offset, length, output_file_name)
 
     print(f"Created clip: {output_file_name}")
 
@@ -69,14 +73,15 @@ def save(first_marker: str, second_marker: str):
     first_timestamp = get_marker_timestamp(first_marker)
     second_timestamp = get_marker_timestamp(second_marker)
 
+    if first_timestamp >= second_timestamp:
+        raise ValueError("First marker must be before second marker")
+
     files, start_offset, end_offset = get_ts_files(
         first_timestamp,
         second_timestamp
     )
 
-    print(f"{files} -> {start_offset} -> {end_offset}")
-
-    concat_ts_files(files, start_offset, end_offset, output_file_name)
+    concat_ts_files(files, start_offset, end_offset, second_timestamp - first_timestamp, output_file_name)
     print(f"Created file: {output_file_name}")
 
 def mark(name: str) -> None:
@@ -103,8 +108,7 @@ def mark(name: str) -> None:
 def get_marker_timestamp(name: str) -> float:
     markers_file = os.path.join(os.path.dirname(__file__), "markers.json")
     if not os.path.exists(markers_file):
-        print("No markers found.")
-        return
+        raise RuntimeError("No markers found")
 
     with open(markers_file, "r") as f:
         markers = json.load(f)
