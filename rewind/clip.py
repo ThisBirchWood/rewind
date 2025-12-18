@@ -1,13 +1,8 @@
 #!/usr/bin/env python3
 from datetime import datetime
-from rewind.video import combine_last_x_ts_files
+from rewind.video import clip
 import obsws_python as obs
 import sys, argparse
-
-def create_recording(seconds: int) -> None:
-    output_file_name = f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}.mp4"
-    combine_last_x_ts_files(seconds, output_file_name)
-    print(f"Created clip: {output_file_name}")
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
@@ -32,7 +27,7 @@ def main(argv=None) -> int:
     args = parser.parse_args(argv)
 
     if args.command == "save":
-        create_recording(args.seconds)
+        clip(args.seconds)
     else:
         parser.error("Unknown command")
 
