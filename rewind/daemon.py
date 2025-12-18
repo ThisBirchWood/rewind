@@ -6,7 +6,7 @@ import time
 import obsws_python as obs
 import subprocess
 
-from rewind.video import get_duration
+from rewind.core import get_duration
 from rewind.paths import load_state, write_state, load_config
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
@@ -81,7 +81,13 @@ def main() -> None:
     time.sleep(5)
 
     config = load_config()
-    con = open_obs_connection(config["obs"]["host"], config["obs"]["port"], config["obs"]["password"])
+
+    con = None
+    for _ in range(10):
+        con = open_obs_connection(config["obs"]["host"], config["obs"]["port"], config["obs"]["password"])
+        if con is not None:
+            break
+        time.sleep(2)
 
     recording_dir = con.get_record_directory().record_directory
     start_recording(con)

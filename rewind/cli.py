@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import sys
 import argparse
-from rewind.video import clip
+from rewind.core import clip, mark
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
@@ -19,6 +19,14 @@ def build_parser() -> argparse.ArgumentParser:
         help="Number of seconds to include in the clip (default: 30)"
     )
 
+    mark = sub.add_parser("mark", help="Mark the current time in the recording for later reference")
+    mark.add_argument(
+        "-n", "--name",
+        type=str,
+        required=True,
+        help="Name of the marker"
+    )
+
     return parser
 
 def main(argv=None) -> int:
@@ -27,6 +35,8 @@ def main(argv=None) -> int:
 
     if args.command == "save":
         clip(args.seconds)
+    elif args.command == "mark":
+        mark(args.name)
     else:
         parser.error("Unknown command")
 

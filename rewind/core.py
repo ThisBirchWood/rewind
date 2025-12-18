@@ -2,6 +2,7 @@
 import os
 import datetime
 import subprocess
+import json
 from rewind.paths import load_state
 
 """
@@ -62,6 +63,27 @@ def clip(seconds_from_end: float) -> None:
     output_file_name = f"{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}.mp4"
     combine_last_x_ts_files(seconds_from_end, output_file_name)
     print(f"Created clip: {output_file_name}")
+
+def mark(name: str) -> None:
+    if not name:
+        raise ValueError("Marker name cannot be empty")
+    
+    # writes marker to json file (not state)
+    markers_file = os.path.join(os.path.dirname(__file__), "markers.json")
+    if os.path.exists(markers_file):
+        with open(markers_file, "r") as f:
+            markers = json.load(f)
+    else:
+        markers = []
+
+    markers.append({
+        "name": name,
+        "timestamp": datetime.datetime.now().timestamp()
+    })
+    
+    with open(markers_file, "w") as f:
+        json.dump(markers, f, indent=4)
+    print(f"Added marker: {name}")
 
 def get_duration(file_path: str) -> float:
     result = subprocess.run(
