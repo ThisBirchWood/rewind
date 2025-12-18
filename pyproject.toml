@@ -11,4 +11,4 @@ dependencies = [
 
 [project.scripts]
 rewind = "rewind.clip:main"
-rewind-daemon = "rewind.service:main"
+rewind-daemon = "rewind.daemon:main"
