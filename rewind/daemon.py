@@ -8,6 +8,8 @@ import subprocess
 
 from rewind.video import get_duration
 from rewind.paths import load_state, write_state, load_config
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
 
 INTERVAL = 10
 MAX_AGE_SECONDS = 60 * 60 * 1
@@ -49,14 +51,13 @@ def add_file_to_state(file_path: str) -> None:
     state = load_state()
     files = state.get("files", [])
 
-    # Update duration of last file if exists 
     if files and len(files) > 0:
         last_file = files[-1]
-        last_file["duration"] = get_duration(last_file["path"])
+        last_file["e_timestamp"] = datetime.datetime.now().timestamp()
 
     files.append({
         "path": file_path,
-        "duration": 0.0
+        "timestamp": datetime.datetime.now().timestamp(),
     })
 
     state["files"] = files
@@ -65,6 +66,12 @@ def add_file_to_state(file_path: str) -> None:
 def handle_shutdown(signum, frame):
     global running
     running = False
+
+class Handler(FileSystemEventHandler):
+    def on_created(self, event):
+        if not event.is_directory and event.src_path.endswith(".ts"):
+            add_file_to_state(event.src_path)
+            print(f"Added new file to state: {event.src_path}")
 
 def main() -> None:
     signal.signal(signal.SIGINT, handle_shutdown)
@@ -75,29 +82,19 @@ def main() -> None:
 
     config = load_config()
     con = open_obs_connection(config["obs"]["host"], config["obs"]["port"], config["obs"]["password"])
-    if con is None:
-        return
+
     recording_dir = con.get_record_directory().record_directory
     start_recording(con)
-
     create_state_file()
 
-    current_files = os.listdir(recording_dir)
-
     try:
+        event_handler = Handler()
+        observer = Observer()
+        observer.schedule(event_handler, path=recording_dir, recursive=False)
+        observer.start()
+
         while running:
             cleanup_old_files(recording_dir, MAX_AGE_SECONDS)
-
-            new_files = os.listdir(recording_dir)
-            added_files = set(new_files) - set(current_files)
-
-            # Add new files to state
-            for filename in added_files:
-                file_path = os.path.join(recording_dir, filename)
-                add_file_to_state(file_path)
-                print(f"Added new file to state: {file_path}")
-
-            current_files = new_files
             time.sleep(INTERVAL)
     finally:
         stop_recording(con)
