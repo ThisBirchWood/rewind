@@ -1,7 +1,18 @@
 from pathlib import Path
-import os, json
+import os, json, tomllib
+from importlib import resources
 
 APP_NAME = "rewind"
+USER_CONFIG = Path.home() / ".rewind.toml"
+
+def load_config() -> dict:
+    if USER_CONFIG.exists():
+        with USER_CONFIG.open("rb") as f:
+            return tomllib.load(f)
+
+    # fallback to packaged default
+    with resources.files("rewind").joinpath("config.toml").open("rb") as f:
+        return tomllib.load(f)
 
 def state_dir() -> Path:
     base = os.path.expanduser("~/.local/share")

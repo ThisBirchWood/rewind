@@ -7,7 +7,7 @@ import obsws_python as obs
 import subprocess
 
 from rewind.video import get_duration
-from rewind.paths import load_state, write_state
+from rewind.paths import load_state, write_state, load_config
 
 INTERVAL = 10
 MAX_AGE_SECONDS = 60 * 60 * 1
@@ -16,9 +16,9 @@ running = True
 def open_obs():
     subprocess.Popen(["obs", "--minimize-to-tray"])
 
-def open_obs_connection() -> obs.ReqClient | None:
+def open_obs_connection(host: str, port: int, password: str) -> obs.ReqClient | None:
     try:
-        con = obs.ReqClient()
+        con = obs.ReqClient(host=host, port=port, password=password)
         return con
     except ConnectionRefusedError:
         print("Could not connect to OBS. Is it running and is the WebSocket server enabled?")
@@ -72,7 +72,9 @@ def main() -> None:
 
     open_obs()
     time.sleep(5)
-    con = open_obs_connection()
+
+    config = load_config()
+    con = open_obs_connection(config["obs"]["host"], config["obs"]["port"], config["obs"]["password"])
     if con is None:
         return
     recording_dir = con.get_record_directory().record_directory

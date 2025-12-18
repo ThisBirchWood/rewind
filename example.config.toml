@@ -1,4 +1,4 @@
-[connection]
+[obs]
 host = "localhost"
 port = 4455
 password = "6BQWrpHLbyJxNLPJ"

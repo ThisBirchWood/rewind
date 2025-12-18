@@ -12,3 +12,6 @@ dependencies = [
 [project.scripts]
 rewind = "rewind.clip:main"
 rewind-daemon = "rewind.daemon:main"
+
+[tool.setuptools.package-data]
+rewind = ["config.toml"]
