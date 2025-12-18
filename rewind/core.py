@@ -80,10 +80,23 @@ def mark(name: str) -> None:
         "name": name,
         "timestamp": datetime.datetime.now().timestamp()
     })
-    
+
     with open(markers_file, "w") as f:
         json.dump(markers, f, indent=4)
     print(f"Added marker: {name}")
+
+def print_markers() -> None:
+    markers_file = os.path.join(os.path.dirname(__file__), "markers.json")
+    if not os.path.exists(markers_file):
+        print("No markers found.")
+        return
+
+    with open(markers_file, "r") as f:
+        markers = json.load(f)
+
+    for marker in markers:
+        format_time = datetime.datetime.fromtimestamp(marker['timestamp']).strftime('%Y-%m-%d %H:%M:%S')
+        print(f"{format_time} -> {marker['name']}")
 
 def get_duration(file_path: str) -> float:
     result = subprocess.run(
