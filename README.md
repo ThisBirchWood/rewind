@@ -1,6 +1,5 @@
-A minimal Python script to control OBS Studio recording via OBS WebSocket and to combine segmented .ts recordings into a single .mp4 clip using FFmpeg.
-
-This project is meant to be (and will evolve into) a long-duration, disk-backed replay buffer.
+# Overview
+rewind is a lightweight, disk-backed replay recording tool for OBS that continuously records video into timestamped chunks and lets you retroactively extract meaningful moments. Instead of a short, RAM-limited replay buffer, it keeps a rolling on-disk timeline for the duration of a session, allowing you to mark events as they happen and later export clips either from the last N seconds or between named markers. A background daemon manages recording, chunk tracking, and cleanup, while a simple CLI provides fast, scriptable control over marking and clip creation—prioritizing reliability, low overhead, and post-hoc selection of what parts of a session are worth keeping.
 
 # Steps
 1) Setup OBS and make the recording output: "ts" with a 1 minute segment size
