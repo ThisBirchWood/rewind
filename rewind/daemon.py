@@ -17,12 +17,20 @@ def open_obs():
     subprocess.Popen(["obs", "--minimize-to-tray"])
 
 def open_obs_connection(host: str, port: int, password: str) -> obs.ReqClient | None:
-    try:
-        con = obs.ReqClient(host=host, port=port, password=password)
-        return con
-    except ConnectionRefusedError:
-        print("Could not connect to OBS. Is it running and is the WebSocket server enabled?")
-        return None
+    con = None
+    init_sleep = 1
+    for _ in range(10):
+        try:
+            con = obs.ReqClient(host=host, port=port, password=password)
+        except Exception:
+            pass
+
+        if con:
+            return con
+
+        time.sleep(init_sleep)
+        init_sleep *= 2
+    return None
 
 def start_recording(con: obs.ReqClient) -> None:
     con.start_record()
@@ -49,10 +57,6 @@ def add_file_to_state(file_path: str) -> None:
     state = load_state()
     files = state.get("files", [])
 
-    if files and len(files) > 0:
-        last_file = files[-1]
-        last_file["e_timestamp"] = datetime.datetime.now().timestamp()
-
     files.append({
         "path": file_path,
         "timestamp": datetime.datetime.now().timestamp(),
@@ -76,16 +80,8 @@ def main() -> None:
     signal.signal(signal.SIGTERM, handle_shutdown)
 
     open_obs()
-    time.sleep(5)
-
     config = load_config()
-
-    con = None
-    for _ in range(10):
-        con = open_obs_connection(config["obs"]["host"], config["obs"]["port"], config["obs"]["password"])
-        if con is not None:
-            break
-        time.sleep(2)
+    con = open_obs_connection(config["obs"]["host"], config["obs"]["port"], config["obs"]["password"])
 
     recording_dir = con.get_record_directory().record_directory
     start_recording(con)
