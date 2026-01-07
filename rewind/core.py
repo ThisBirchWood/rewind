@@ -4,7 +4,8 @@ import datetime
 import subprocess
 import json
 
-from rewind.paths import load_state, load_config
+from rewind.paths import load_config
+from rewind.state import load_state
 
 """
 Retrieves .ts files recorded between the specified timestamps.
