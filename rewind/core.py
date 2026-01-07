@@ -69,7 +69,7 @@ def clip(seconds_from_end: float) -> None:
     print(f"Created clip: {output_file_name}")
 
 def save(first_marker: str, second_marker: str):
-    output_file_name = f"{first_marker}-{second_marker}-{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}.mp4"
+    output_file_name = f"{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}-[{first_marker}-{second_marker}].mp4"
     first_timestamp = get_marker_timestamp(first_marker)
     second_timestamp = get_marker_timestamp(second_marker)
 
