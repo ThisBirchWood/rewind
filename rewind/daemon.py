@@ -8,7 +8,8 @@ import subprocess
 
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
-from rewind.paths import load_state, write_state, load_config
+from rewind.paths import load_config
+from rewind.state import add_file_to_state, create_state_file_if_needed, cleanup_state_files
 
 INTERVAL = 10
 running = True
@@ -40,7 +41,7 @@ def stop_recording(con: obs.ReqClient) -> None:
     con.stop_record()
     print("Stopped recording")
 
-def cleanup_old_files(directory: str, max_age_seconds: int) -> None:
+def cleanup_physical_files(directory: str, max_age_seconds: int) -> None:
     for filename in os.listdir(directory):
         file_path = os.path.join(directory, filename)
         if os.path.isfile(file_path):
@@ -48,22 +49,6 @@ def cleanup_old_files(directory: str, max_age_seconds: int) -> None:
             if file_age > max_age_seconds and filename.endswith(".ts"):
                 os.remove(file_path)
                 print(f"Removed old file: {file_path}")
-
-def create_state_file() -> None:
-    state = {"files": []}
-    write_state(state)
-
-def add_file_to_state(file_path: str) -> None:
-    state = load_state()
-    files = state.get("files", [])
-
-    files.append({
-        "path": file_path,
-        "timestamp": datetime.datetime.now().timestamp(),
-    })
-
-    state["files"] = files
-    write_state(state)
 
 def handle_shutdown(signum, frame):
     global running
@@ -85,7 +70,8 @@ def main() -> None:
 
     recording_dir = con.get_record_directory().record_directory
     start_recording(con)
-    create_state_file()
+
+    create_state_file_if_needed()
 
     try:
         event_handler = Handler()
@@ -94,7 +80,8 @@ def main() -> None:
         observer.start()
 
         while running:
-            cleanup_old_files(recording_dir, config["record"]["max_record_time"])
+            cleanup_physical_files(recording_dir, config["record"]["max_record_time"])
+            cleanup_state_files()
             time.sleep(INTERVAL)
     finally:
         stop_recording(con)
