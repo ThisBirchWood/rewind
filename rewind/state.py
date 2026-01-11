@@ -1,8 +1,8 @@
+#!/usr/bin/env python3
 import datetime
 import json
 import os
 
-from rewind.paths import load_config
 from pathlib import Path
 
 APP_NAME = "rewind"
