@@ -2,3 +2,6 @@
 host = "localhost"
 port = 4455
 password = "6BQWrpHLbyJxNLPJ"
+
+[record]
+max_record_time = 28800
