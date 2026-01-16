@@ -10,6 +10,7 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 from rewind.paths import load_config
 from rewind.state import add_file_to_state, create_state_file_if_needed, cleanup_state_files
+from rewind.core import mark
 
 INTERVAL = 10
 running = True
@@ -72,6 +73,7 @@ def main() -> None:
     start_recording(con)
 
     create_state_file_if_needed()
+    mark("daemon-start")
 
     try:
         event_handler = Handler()
