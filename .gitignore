@@ -4,3 +4,4 @@ config.toml
 __pycache__/
 rewind.egg-info/
 markers.json
+*.code-workspace
