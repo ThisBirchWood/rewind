@@ -88,6 +88,9 @@ def mark(name: str) -> None:
     if not name:
         raise ValueError("Marker name cannot be empty")
     
+    if marker_exists(name):
+        raise ValueError("Marker name already exists")
+    
     # writes marker to json file (not state)
     markers_file = os.path.join(os.path.dirname(__file__), "markers.json")
     if os.path.exists(markers_file):
@@ -119,6 +122,35 @@ def get_marker_timestamp(name: str) -> float:
             return marker["timestamp"]
     
     raise ValueError("Marker name does not exist")
+
+def marker_exists(name: str) -> bool:
+    markers_file = os.path.join(os.path.dirname(__file__), "markers.json")
+    if not os.path.exists(markers_file):
+        return False
+
+    with open(markers_file, "r") as f:
+        markers = json.load(f)
+
+    for marker in markers:
+        if marker["name"] == name:
+            return True
+    
+    return False
+
+def remove_marker(name: str) -> None:
+    markers_file = os.path.join(os.path.dirname(__file__), "markers.json")
+    if not os.path.exists(markers_file):
+        raise RuntimeError("No markers found")
+
+    with open(markers_file, "r") as f:
+        markers = json.load(f)
+
+    markers = [m for m in markers if m["name"] != name]
+
+    with open(markers_file, "w") as f:
+        json.dump(markers, f, indent=4)
+
+    print(f"Removed marker: {name}")
 
 def print_markers() -> None:
     clean_old_markers(load_config()["record"]["max_record_time"])
