@@ -1,18 +1,31 @@
 #!/usr/bin/env python3
+import os
 import tomllib
-
 from pathlib import Path
 from importlib import resources
 
 APP_NAME = "rewind"
-USER_CONFIG = Path.home() / ".rewind.toml"
+CONFIG_NAME = "config.toml"
 STATE_NAME = "state.json"
 
-def load_config() -> dict:
-    if USER_CONFIG.exists():
-        with USER_CONFIG.open("rb") as f:
-            return tomllib.load(f)
+def get_config_dir() -> Path:
+    base = os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")
+    return Path(base) / APP_NAME
 
-    # fallback to packaged default
-    with resources.files("rewind").joinpath("config.toml").open("rb") as f:
+
+def load_config() -> dict:
+    config_dir = get_config_dir()
+    config_file = config_dir / CONFIG_NAME
+
+    print(f"Loading config from {config_file}")
+
+    # Create config directory if it doesn't exist and replace with default config
+    if not config_file.exists():
+        config_dir.mkdir(parents=True, exist_ok=True)
+        with resources.open_text("rewind", CONFIG_NAME) as default_config:
+            with config_file.open("w") as f:
+                f.write(default_config.read())
+
+    with config_file.open("rb") as f:
         return tomllib.load(f)
+        
