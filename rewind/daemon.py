@@ -8,8 +8,8 @@ import subprocess
 
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
-from rewind.core import mark
 from rewind.paths import load_config
+from rewind.core import mark, marker_exists, remove_marker
 from rewind.state import add_file_to_state, create_state_file_if_needed, cleanup_state_files
 
 INTERVAL = 10
@@ -42,6 +42,12 @@ def stop_recording(con: obs.ReqClient) -> None:
     con.stop_record()
     print("Stopped recording")
 
+def create_initial_marker() -> None:
+    if marker_exists("daemon-start"):
+        remove_marker("daemon-start")
+
+    mark("daemon-start")
+
 def cleanup_physical_files(directory: str, max_age_seconds: int) -> None:
     for filename in os.listdir(directory):
         file_path = os.path.join(directory, filename)
@@ -73,7 +79,7 @@ def main() -> None:
     start_recording(con)
 
     create_state_file_if_needed()
-    mark("daemon-start")
+    create_initial_marker()
 
     try:
         event_handler = Handler()
