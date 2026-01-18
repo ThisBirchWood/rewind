@@ -17,8 +17,6 @@ def load_config() -> dict:
     config_dir = get_config_dir()
     config_file = config_dir / CONFIG_NAME
 
-    print(f"Loading config from {config_file}")
-
     # Create config directory if it doesn't exist and replace with default config
     if not config_file.exists():
         config_dir.mkdir(parents=True, exist_ok=True)
