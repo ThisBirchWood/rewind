@@ -190,7 +190,6 @@ def get_duration(file_path: str) -> float:
         stderr=subprocess.STDOUT
     )
 
-    # error checking
     if result.returncode != 0:
         raise RuntimeError(f"ffprobe failed for file {file_path}")
 
