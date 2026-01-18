@@ -5,6 +5,7 @@ import signal
 import time
 import obsws_python as obs
 import subprocess
+import logging
 
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
@@ -14,6 +15,7 @@ from rewind.state import add_file_to_state, create_state_file_if_needed, cleanup
 
 INTERVAL = 10
 running = True
+logging.getLogger("obsws_python").setLevel(logging.CRITICAL)
 
 def open_obs():
     kill_command =  subprocess.Popen(["pkill", "obs"])
@@ -27,12 +29,14 @@ def open_obs():
 
 def open_obs_connection(host: str, port: int, password: str) -> obs.ReqClient | None:
     con = None
+    max_attempts = 10
     init_sleep = 1
-    for _ in range(10):
+
+    for _ in range(max_attempts):
         try:
             con = obs.ReqClient(host=host, port=port, password=password)
-        except Exception:
-            pass
+        except ConnectionRefusedError:
+            print("OBS WebSocket not ready, retrying...")
 
         if con:
             return con
