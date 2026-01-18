@@ -16,6 +16,9 @@ INTERVAL = 10
 running = True
 
 def open_obs():
+    kill_command =  subprocess.Popen(["pkill", "obs"])
+    kill_command.wait()
+
     # remove .sentinel dir if exists
     if os.path.exists(os.path.expanduser("~/.config/obs-studio/.sentinel")):
         print("Removing existing .sentinel directory")
