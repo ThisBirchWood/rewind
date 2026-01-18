@@ -16,6 +16,11 @@ INTERVAL = 10
 running = True
 
 def open_obs():
+    # remove .sentinel dir if exists
+    if os.path.exists(os.path.expanduser("~/.config/obs-studio/.sentinel")):
+        print("Removing existing .sentinel directory")
+        subprocess.Popen(["rm", "-rf", os.path.expanduser("~/.config/obs-studio/.sentinel")])
+
     subprocess.Popen(["obs", "--minimize-to-tray"])
 
 def open_obs_connection(host: str, port: int, password: str) -> obs.ReqClient | None:

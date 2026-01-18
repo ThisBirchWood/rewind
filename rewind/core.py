@@ -107,7 +107,6 @@ def remove_marker(name: str) -> None:
 
     print(f"Removed marker: {name}")
 
-
 def marker_exists(name: str) -> bool:
     markers_file = os.path.join(os.path.dirname(__file__), "markers.json")
     if not os.path.exists(markers_file):
