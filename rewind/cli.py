@@ -60,16 +60,20 @@ def main(argv=None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
 
-    if args.command == "clip":
-        clip(args.seconds)
-    elif args.command == "mark":
-        mark(args.name)
-    elif args.command == "list":
-        print_markers()
-    elif args.command == "save":
-        save(args.start, args.end)
-    else:
-        parser.error("Unknown command")
+    try:
+        if args.command == "clip":
+            clip(args.seconds)
+        elif args.command == "mark":
+            mark(args.name)
+        elif args.command == "list":
+            print_markers()
+        elif args.command == "save":
+            save(args.start, args.end)
+        else:
+            parser.error("Unknown command")
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
 
     return 0
 
