@@ -6,6 +6,7 @@ import time
 import obsws_python as obs
 import subprocess
 import logging
+import json
 
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
@@ -68,6 +69,20 @@ def cleanup_physical_files(directory: str, max_age_seconds: int) -> None:
                 os.remove(file_path)
                 print(f"Removed old file: {file_path}")
 
+def cleanup_markers(max_age_seconds: float) -> None:
+    markers_file = os.path.join(os.path.dirname(__file__), "markers.json")
+    if not os.path.exists(markers_file):
+        return
+
+    with open(markers_file, "r") as f:
+        markers = json.load(f)
+
+    current_time = datetime.datetime.now().timestamp()
+    markers = [m for m in markers if current_time - m['timestamp'] <= max_age_seconds]
+
+    with open(markers_file, "w") as f:
+        json.dump(markers, f, indent=4)
+
 def handle_shutdown(signum, frame):
     global running
     running = False
@@ -79,6 +94,7 @@ class Handler(FileSystemEventHandler):
             print(f"Added new file to state: {event.src_path}")
 
 def main() -> None:
+    print("NEW")
     signal.signal(signal.SIGINT, handle_shutdown)
     signal.signal(signal.SIGTERM, handle_shutdown)
 
@@ -101,6 +117,7 @@ def main() -> None:
         while running:
             cleanup_physical_files(recording_dir, config["record"]["max_record_time"])
             cleanup_state_files()
+            cleanup_markers(config["record"]["max_record_time"])
             time.sleep(INTERVAL)
     finally:
         stop_recording(con)

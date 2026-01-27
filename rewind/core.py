@@ -78,8 +78,6 @@ def get_marker_timestamp(name: str) -> float:
     raise ValueError("Marker name does not exist")
 
 def print_markers() -> None:
-    _clean_old_markers(load_config()["record"]["max_record_time"])
-
     markers_file = os.path.join(os.path.dirname(__file__), "markers.json")
     if not os.path.exists(markers_file):
         print("No markers found.")
@@ -166,20 +164,6 @@ def _concat_ts_files(file_list: list[str], start_offset: float, end_offset: floa
 
     subprocess.run(cmd)
     os.remove("file_list.txt")
-
-def _clean_old_markers(max_age_seconds: float) -> None:
-    markers_file = os.path.join(os.path.dirname(__file__), "markers.json")
-    if not os.path.exists(markers_file):
-        return
-
-    with open(markers_file, "r") as f:
-        markers = json.load(f)
-
-    current_time = datetime.datetime.now().timestamp()
-    markers = [m for m in markers if current_time - m['timestamp'] <= max_age_seconds]
-
-    with open(markers_file, "w") as f:
-        json.dump(markers, f, indent=4)
 
 def get_duration(file_path: str) -> float:
     result = subprocess.run(

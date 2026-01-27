@@ -12,7 +12,6 @@ def get_config_dir() -> Path:
     base = os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")
     return Path(base) / APP_NAME
 
-
 def load_config() -> dict:
     config_dir = get_config_dir()
     config_file = config_dir / CONFIG_NAME
