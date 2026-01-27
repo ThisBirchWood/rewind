@@ -4,7 +4,6 @@ import datetime
 import subprocess
 import json
 
-from rewind.paths import load_config
 from rewind.state import load_state
 
 def clip(seconds_from_end: float) -> None:

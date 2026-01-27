@@ -94,7 +94,6 @@ class Handler(FileSystemEventHandler):
             print(f"Added new file to state: {event.src_path}")
 
 def main() -> None:
-    print("NEW")
     signal.signal(signal.SIGINT, handle_shutdown)
     signal.signal(signal.SIGTERM, handle_shutdown)
 
