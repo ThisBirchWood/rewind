@@ -46,12 +46,7 @@ def cleanup_state_files() -> None:
     files = state.get("files", [])
 
     # Remove old files from state
-    for file in files:
-        if not os.path.exists(file["path"]):
-            files.remove(file)
-            print(f"Removed non-existent file from state: {file['path']}")
-
-    state["files"] = files
+    state["files"] = [file for file in files if not os.path.exists(file["path"])]
     write_state(state)
 
 def create_state_file_if_needed() -> None:
