@@ -7,6 +7,7 @@ import obsws_python as obs
 import subprocess
 import logging
 import json
+import shutil
 
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
@@ -16,49 +17,63 @@ from rewind.state import add_file_to_state, create_state_file_if_needed, cleanup
 
 INTERVAL = 10
 running = True
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+logging.basicConfig(format="%(levelname)s:%(name)s:%(message)s")
 logging.getLogger("obsws_python").setLevel(logging.CRITICAL)
 
+SENTINEL_FILE = os.path.expanduser("~/.config/obs-studio/.sentinel")
+OBS_MAX_RETRIES = 10
+
 def open_obs():
-    kill_command =  subprocess.Popen(["pkill", "obs"])
-    kill_command.wait()
+    kill_command = subprocess.run(['pkill', 'obs'])
+    if kill_command.returncode not in [0, 1]:
+        raise SystemError("Could not kill existing OBS instance")
 
-    if os.path.exists(os.path.expanduser("~/.config/obs-studio/.sentinel")):
-        print("Removing existing .sentinel directory")
-        subprocess.Popen(["rm", "-rf", os.path.expanduser("~/.config/obs-studio/.sentinel")])
+    if os.path.exists(SENTINEL_FILE):
+        try:
+            shutil.rmtree(SENTINEL_FILE)
+            logger.info("Removed existing OBS .sentinel directory")
+        except Exception as e:
+            logger.error("Could not delete OBS .sentinel directory")
 
-    subprocess.Popen(["obs", "--minimize-to-tray"])
+    # Using and not checking OBS since it needs to be non-blocking
+    subprocess.Popen(["obs", "--minimize-to-tray"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-def open_obs_connection(host: str, port: int, password: str) -> obs.ReqClient | None:
+def open_obs_connection(host: str, port: int, password: str) -> obs.ReqClient:
     con = None
-    max_attempts = 10
     init_sleep = 1
 
-    for _ in range(max_attempts):
+    for _ in range(OBS_MAX_RETRIES):
         try:
             con = obs.ReqClient(host=host, port=port, password=password)
         except ConnectionRefusedError:
-            print("OBS WebSocket not ready, retrying...")
+            logger.info("OBS WebSocket not ready, retrying...")
 
         if con:
+            logger.info(f"Successfully connected to OBS at {host}:{port}")
             return con
 
         time.sleep(init_sleep)
         init_sleep *= 2
-    return None
+    
+    raise RuntimeError("Could not connect to OBS. Either websocket has not been setup or OBS crashed")
 
 def start_recording(con: obs.ReqClient) -> None:
     con.start_record()
-    print("Started recording")
+    logger.info("Started recording")
 
 def stop_recording(con: obs.ReqClient) -> None:
     con.stop_record()
-    print("Stopped recording")
+    logger.info("Stopped recording")
 
 def create_initial_marker() -> None:
     if marker_exists("daemon-start"):
         remove_marker("daemon-start")
 
     mark("daemon-start")
+    logger.info("Created daemon-start marker")
 
 def cleanup_physical_files(directory: str, max_age_seconds: int) -> None:
     for filename in os.listdir(directory):
@@ -67,7 +82,7 @@ def cleanup_physical_files(directory: str, max_age_seconds: int) -> None:
             file_age = datetime.datetime.now().timestamp() - os.path.getmtime(file_path)
             if file_age > max_age_seconds and filename.endswith(".ts"):
                 os.remove(file_path)
-                print(f"Removed old file: {file_path}")
+                logger.info(f"Removed old file: {file_path}")
 
 def cleanup_markers(max_age_seconds: float) -> None:
     markers_file = os.path.join(os.path.dirname(__file__), "markers.json")
@@ -78,10 +93,13 @@ def cleanup_markers(max_age_seconds: float) -> None:
         markers = json.load(f)
 
     current_time = datetime.datetime.now().timestamp()
-    markers = [m for m in markers if current_time - m['timestamp'] <= max_age_seconds]
+    new_markers = [m for m in markers if current_time - m['timestamp'] <= max_age_seconds]
 
     with open(markers_file, "w") as f:
-        json.dump(markers, f, indent=4)
+        json.dump(new_markers, f, indent=4)
+
+    if new_markers != markers:
+        logger.info(f"Cleaning up {len(markers)-len(new_markers)} markers")
 
 def handle_shutdown(signum, frame):
     global running
@@ -89,9 +107,13 @@ def handle_shutdown(signum, frame):
 
 class Handler(FileSystemEventHandler):
     def on_created(self, event):
-        if not event.is_directory and event.src_path.endswith(".ts"):
-            add_file_to_state(event.src_path)
-            print(f"Added new file to state: {event.src_path}")
+        if event.is_directory:
+            return
+        if not event.src_path.endswith(".ts"):
+            return
+        
+        add_file_to_state(event.src_path)
+        logger.info(f"Added new file to state: {event.src_path}")
 
 def main() -> None:
     signal.signal(signal.SIGINT, handle_shutdown)
@@ -121,7 +143,7 @@ def main() -> None:
     finally:
         stop_recording(con)
         con.disconnect()
-        print("Daemon stopped")
+        logger.info("Daemon stopped")
 
 if __name__ == "__main__":
     main()
