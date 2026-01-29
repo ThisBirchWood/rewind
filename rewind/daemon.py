@@ -101,10 +101,6 @@ def cleanup_markers(max_age_seconds: float) -> None:
     if new_markers != markers:
         logger.info(f"Cleaning up {len(markers)-len(new_markers)} markers")
 
-def handle_shutdown(signum, frame):
-    global running
-    running = False
-
 class Handler(FileSystemEventHandler):
     def on_created(self, event):
         if event.is_directory:
@@ -116,9 +112,6 @@ class Handler(FileSystemEventHandler):
         logger.info(f"Added new file to state: {event.src_path}")
 
 def main() -> None:
-    signal.signal(signal.SIGINT, handle_shutdown)
-    signal.signal(signal.SIGTERM, handle_shutdown)
-
     open_obs()
     config = load_config()
     con = open_obs_connection(config["obs"]["host"], config["obs"]["port"], config["obs"]["password"])
