@@ -31,13 +31,11 @@ def save(first_marker: str, second_marker: str):
     vod_dir = os.path.expanduser(load_config()["record"]["vod_output"])
     os.makedirs(vod_dir, exist_ok=True)
 
-    output_file_name = f"{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}-[{first_marker}-{second_marker}].mp4"
-    output_path = os.path.join(vod_dir, output_file_name)
-
-    print(output_path)
-
     first_timestamp = get_marker_timestamp(first_marker)
     second_timestamp = get_marker_timestamp(second_marker)
+
+    output_file_name = f"{datetime.datetime.fromtimestamp(first_timestamp).strftime('%Y-%m-%d_%H:%M:%S')}-[{first_marker}-{second_marker}].mp4"
+    output_path = os.path.join(vod_dir, output_file_name)
 
     if first_timestamp >= second_timestamp:
         raise ValueError("First marker must be before second marker")
