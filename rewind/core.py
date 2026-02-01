@@ -5,6 +5,7 @@ import subprocess
 import json
 
 from rewind.state import load_state
+from tqdm import tqdm
 
 def clip(seconds_from_end: float) -> None:
     output_file_name = f"{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}.mp4"
@@ -153,7 +154,7 @@ def _concat_ts_files(file_list: list[str], start_offset: float, end_offset: floa
         for file_path in file_list:
             f.write(f"file '{file_path}'\n")
 
-    cmd = ["ffmpeg", "-y"]
+    cmd = ["ffmpeg", "-y", "-hide_banner", "-loglevel", "error", "-nostats", "-progress", "pipe:1"]
     if start_offset > 0:
         cmd += ["-ss", str(start_offset)]
     if end_offset > 0:
@@ -161,8 +162,38 @@ def _concat_ts_files(file_list: list[str], start_offset: float, end_offset: floa
     cmd += ["-f", "concat", "-safe", "0", "-i", "file_list.txt", "-c", "copy"]
     cmd.append(output_file)
 
-    subprocess.run(cmd)
+    process = subprocess.Popen(
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        bufsize=1,
+    )
+
+    with tqdm(
+        total=length,
+        unit="s",
+        unit_scale=False,
+        desc="Processing",
+        leave=True,
+    ) as pbar:
+        for line in process.stdout:
+            line = line.strip()
+
+            if line.startswith("out_time_ms="):
+                out_time_ms = int(line.split("=")[1])
+                seconds = out_time_ms / 1_000_000
+                pbar.n = min(seconds, length)
+                pbar.refresh()
+
+            elif line == "progress=end":
+                break
+
+    ret = process.wait()
     os.remove("file_list.txt")
+
+    if ret != 0:
+        raise RuntimeError("ffmpeg failed")
 
 def get_duration(file_path: str) -> float:
     result = subprocess.run(
