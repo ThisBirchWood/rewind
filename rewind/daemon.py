@@ -35,7 +35,7 @@ def open_obs():
             shutil.rmtree(SENTINEL_FILE)
             logger.info("Removed existing OBS .sentinel directory")
         except Exception as e:
-            logger.error("Could not delete OBS .sentinel directory")
+            logger.error(f"Could not delete OBS .sentinel directory: {e}")
 
     # Using and not checking OBS since it needs to be non-blocking
     subprocess.Popen(["obs", "--minimize-to-tray"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
