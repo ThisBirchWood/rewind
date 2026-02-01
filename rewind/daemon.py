@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import os
 import datetime
-import signal
 import time
 import obsws_python as obs
 import subprocess
