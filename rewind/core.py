@@ -173,7 +173,8 @@ def _concat_ts_files(file_list: list[str], start_offset: float, end_offset: floa
     with tqdm(
         total=length,
         unit="s",
-        unit_scale=False,
+        unit_scale=True,
+        unit_divisor=60,
         desc="Processing",
         leave=True,
     ) as pbar:
