@@ -5,3 +5,5 @@ password = "6BQWrpHLbyJxNLPJ"
 
 [record]
 max_record_time = 28800
+vod_output = "~/Videos/VoDs"
+clip_output = "~/Videos/Clips"

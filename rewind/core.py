@@ -5,10 +5,15 @@ import subprocess
 import json
 
 from rewind.state import load_state
+from rewind.paths import load_config
 from tqdm import tqdm
 
 def clip(seconds_from_end: float) -> None:
+    clip_output = os.path.expanduser(load_config()["record"]["clip_output"])
+    os.makedirs(clip_output, exist_ok=True)
+
     output_file_name = f"{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}.mp4"
+    output_path = os.path.join(clip_output, output_file_name)
 
     start_timestamp = datetime.datetime.now().timestamp() - seconds_from_end
     end_timestamp = datetime.datetime.now().timestamp()
@@ -19,11 +24,18 @@ def clip(seconds_from_end: float) -> None:
         end_timestamp
     )
 
-    _concat_ts_files(files, start_offset, end_offset, length, output_file_name)
-    print(f"Created clip: {output_file_name}")
+    _concat_ts_files(files, start_offset, end_offset, length, output_path)
+    print(f"Created clip: {output_path}")
 
 def save(first_marker: str, second_marker: str):
+    vod_dir = os.path.expanduser(load_config()["record"]["vod_output"])
+    os.makedirs(vod_dir, exist_ok=True)
+
     output_file_name = f"{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}-[{first_marker}-{second_marker}].mp4"
+    output_path = os.path.join(vod_dir, output_file_name)
+
+    print(output_path)
+
     first_timestamp = get_marker_timestamp(first_marker)
     second_timestamp = get_marker_timestamp(second_marker)
 
@@ -35,8 +47,8 @@ def save(first_marker: str, second_marker: str):
         second_timestamp
     )
 
-    _concat_ts_files(files, start_offset, end_offset, second_timestamp - first_timestamp, output_file_name)
-    print(f"Created video file: {output_file_name}")
+    _concat_ts_files(files, start_offset, end_offset, second_timestamp - first_timestamp, output_path)
+    print(f"Created video file: {output_path}")
 
 def mark(name: str) -> None:
     if not name:
