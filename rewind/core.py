@@ -193,7 +193,7 @@ def _concat_ts_files(file_list: list[str], start_offset: float, end_offset: floa
 
             if line.startswith("out_time_ms="):
                 out_time_ms = int(line.split("=")[1])
-                seconds = out_time_ms / 1_000_000
+                seconds = round(out_time_ms / 1_000_000)
                 pbar.n = min(seconds, length)
                 pbar.refresh()
 
