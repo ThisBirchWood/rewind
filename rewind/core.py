@@ -180,6 +180,9 @@ def _concat_ts_files(file_list: list[str], start_offset: float, end_offset: floa
         bufsize=1,
     )
 
+    init_ms_val = 0
+    init_ms_val_set = False
+
     with tqdm(
         total=length,
         unit="s",
@@ -190,10 +193,17 @@ def _concat_ts_files(file_list: list[str], start_offset: float, end_offset: floa
     ) as pbar:
         for line in process.stdout:
             line = line.strip()
+            
 
             if line.startswith("out_time_ms="):
                 out_time_ms = int(line.split("=")[1])
-                seconds = round(out_time_ms / 1_000_000)
+
+                if not init_ms_val_set:
+                    init_ms_val = out_time_ms
+                    init_ms_val_set = True
+                out_time_ms -= init_ms_val
+
+                seconds = abs(out_time_ms / 1_000_000)
                 pbar.n = min(seconds, length)
                 pbar.refresh()
 
