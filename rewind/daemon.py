@@ -7,6 +7,7 @@ import subprocess
 import logging
 import json
 import shutil
+import signal
 
 from threading import Lock
 from watchdog.observers import Observer
@@ -28,6 +29,14 @@ OBS_MAX_RETRIES = 10
 
 seen_files = set()
 seen_lock = Lock()
+
+def shutdown(signum, frame):
+    global running
+    logger.info(f"Received signal {signum}, shutting down cleanly")
+    running = False
+
+signal.signal(signal.SIGINT, shutdown)
+signal.signal(signal.SIGTERM, shutdown)
 
 def open_obs():
     kill_command = subprocess.run(['pkill', 'obs'])
@@ -142,6 +151,10 @@ def main() -> None:
             cleanup_markers(config["record"]["max_record_time"])
             time.sleep(INTERVAL)
     finally:
+        if observer:
+            observer.stop()
+            observer.join()
+
         stop_recording(con)
         con.disconnect()
         logger.info("Daemon stopped")
