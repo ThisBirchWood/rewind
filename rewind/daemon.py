@@ -8,13 +8,13 @@ import logging
 import json
 import shutil
 
+from threading import Lock
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 from rewind.paths import load_config
 from rewind.core import mark, marker_exists, remove_marker
 from rewind.state import add_file_to_state, create_state_file_if_needed, cleanup_state_files
 
-INTERVAL = 10
 running = True
 
 logger = logging.getLogger(__name__)
@@ -22,8 +22,12 @@ logger.setLevel(logging.DEBUG)
 logging.basicConfig(format="%(levelname)s:%(name)s:%(message)s")
 logging.getLogger("obsws_python").setLevel(logging.CRITICAL)
 
+INTERVAL = 10
 SENTINEL_FILE = os.path.expanduser("~/.config/obs-studio/.sentinel")
 OBS_MAX_RETRIES = 10
+
+seen_files = set()
+seen_lock = Lock()
 
 def open_obs():
     kill_command = subprocess.run(['pkill', 'obs'])
@@ -106,6 +110,11 @@ class Handler(FileSystemEventHandler):
             return
         if not event.src_path.endswith(".ts"):
             return
+        
+        with seen_lock:
+            if event.src_path in seen_files:
+                return
+            seen_files.add(event.src_path)
         
         add_file_to_state(event.src_path)
         logger.info(f"Added new file to state: {event.src_path}")
