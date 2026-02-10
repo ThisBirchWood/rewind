@@ -6,3 +6,9 @@ rewind is a lightweight, disk-backed replay recording tool for OBS that continuo
 2) Enable OBS websocket and take note of the host, port and password
 3) Setup config.toml with host, port, password info
 4) Run the daemon as a background service (rewind-daemon)
+
+# Why OBS?
+Instead of implementing a custom screen recorder, rewind uses OBS as the backend recorder. Rationale:
+  - Cross-platform video capture is complex (platform APIs, drivers, hardware acceleration, A/V sync).
+  - Implementing a custom recorder is out of scope and would duplicate mature functionality.
+  - OBS provides a stable, production-grade capture and segmentation pipeline.
