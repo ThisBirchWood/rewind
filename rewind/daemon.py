@@ -27,9 +27,6 @@ INTERVAL = 10
 SENTINEL_FILE = os.path.expanduser("~/.config/obs-studio/.sentinel")
 OBS_MAX_RETRIES = 10
 
-seen_files = set()
-seen_lock = Lock()
-
 def shutdown(signum, frame):
     global running
     logger.info(f"Received signal {signum}, shutting down cleanly")
@@ -119,12 +116,7 @@ class Handler(FileSystemEventHandler):
             return
         if not event.src_path.endswith(".ts"):
             return
-        
-        with seen_lock:
-            if event.src_path in seen_files:
-                return
-            seen_files.add(event.src_path)
-        
+
         add_file_to_state(event.src_path)
         logger.info(f"Added new file to state: {event.src_path}")
 

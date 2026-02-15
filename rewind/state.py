@@ -33,6 +33,11 @@ def add_file_to_state(file_path: str) -> None:
     state = load_state()
     files = state.get("files", [])
 
+    # Idempotency guard
+    existing_paths = {f["path"] for f in files}
+    if file_path in existing_paths:
+        return
+
     files.append({
         "path": file_path,
         "timestamp": datetime.datetime.now().timestamp(),
