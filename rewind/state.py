@@ -4,18 +4,12 @@ import json
 import os
 
 from pathlib import Path
+from rewind.paths import get_state_dir
 
-APP_NAME = "rewind"
 STATE_NAME = "state.json"
 
-def state_dir() -> Path:
-    base = os.path.expanduser("~/.local/share")
-    path = Path(base) / APP_NAME
-    path.mkdir(parents=True, exist_ok=True)
-    return path
-
 def get_state_file_path() -> Path:
-    return state_dir() / STATE_NAME
+    return get_state_dir() / STATE_NAME
 
 def load_state() -> dict:
     if not get_state_file_path().exists():

@@ -6,7 +6,6 @@ from importlib import resources
 
 APP_NAME = "rewind"
 CONFIG_NAME = "config.toml"
-STATE_NAME = "state.json"
 
 def get_config_dir() -> Path:
     base = os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")
@@ -25,4 +24,9 @@ def load_config() -> dict:
 
     with config_file.open("rb") as f:
         return tomllib.load(f)
-        
+    
+def get_state_dir() -> Path:
+    base = os.path.expanduser("~/.local/share")
+    path = Path(base) / APP_NAME
+    path.mkdir(parents=True, exist_ok=True)
+    return path
