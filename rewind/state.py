@@ -16,7 +16,11 @@ def get_state_file_path() -> Path:
     return get_state_dir() / STATE_NAME
 
 def load_state() -> dict:
-    with get_state_file_path().open() as f:
+    path = get_state_file_path()
+    if not path.exists():
+        return EMPTY_STATE.copy()
+
+    with path.open() as f:
         return json.load(f)
 
 def write_state(state: dict) -> None:
