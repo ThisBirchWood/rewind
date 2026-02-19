@@ -79,7 +79,6 @@ def remove_marker(name: str) -> None:
 
 def marker_exists(name: str) -> bool:
     markers = load_state().get("markers", [])
-    print(markers)
 
     for marker in markers:
         if marker["name"] == name:
