@@ -2,9 +2,8 @@
 import os
 import datetime
 import subprocess
-import json
 
-from rewind.state import load_state
+from rewind.state import load_state, add_marker_to_state, remove_marker_from_state
 from rewind.paths import load_config
 from tqdm import tqdm
 
@@ -52,34 +51,11 @@ def mark(name: str) -> None:
     if not name:
         raise ValueError("Marker name cannot be empty")
     
-    if marker_exists(name):
-        raise ValueError("Marker name already exists")
-    
-    # writes marker to json file (not state)
-    markers_file = os.path.join(os.path.dirname(__file__), "markers.json")
-    if os.path.exists(markers_file):
-        with open(markers_file, "r") as f:
-            markers = json.load(f)
-    else:
-        markers = []
-
-    markers.append({
-        "name": name,
-        "timestamp": datetime.datetime.now().timestamp()
-    })
-
-    with open(markers_file, "w") as f:
-        json.dump(markers, f, indent=4)
-
+    add_marker_to_state(name)
     print(f"Added marker: {name}")
 
 def get_marker_timestamp(name: str) -> float:
-    markers_file = os.path.join(os.path.dirname(__file__), "markers.json")
-    if not os.path.exists(markers_file):
-        raise RuntimeError("No markers found")
-
-    with open(markers_file, "r") as f:
-        markers = json.load(f)
+    markers = load_state().get("markers", [])
 
     for marker in markers:
         if marker["name"] == name:
@@ -88,40 +64,22 @@ def get_marker_timestamp(name: str) -> float:
     raise ValueError("Marker name does not exist")
 
 def print_markers() -> None:
-    markers_file = os.path.join(os.path.dirname(__file__), "markers.json")
-    if not os.path.exists(markers_file):
-        print("No markers found.")
-        return
+    markers = load_state().get("markers", [])
 
-    with open(markers_file, "r") as f:
-        markers = json.load(f)
+    if markers == []:
+        print("No markers exist.")
 
     for marker in markers:
         format_time = datetime.datetime.fromtimestamp(marker['timestamp']).strftime('%Y-%m-%d %H:%M:%S')
         print(f"{format_time} -> {marker['name']}")
         
 def remove_marker(name: str) -> None:
-    markers_file = os.path.join(os.path.dirname(__file__), "markers.json")
-    if not os.path.exists(markers_file):
-        raise RuntimeError("No markers found")
-
-    with open(markers_file, "r") as f:
-        markers = json.load(f)
-
-    markers = [m for m in markers if m["name"] != name]
-
-    with open(markers_file, "w") as f:
-        json.dump(markers, f, indent=4)
-
+    remove_marker_from_state(name)
     print(f"Removed marker: {name}")
 
 def marker_exists(name: str) -> bool:
-    markers_file = os.path.join(os.path.dirname(__file__), "markers.json")
-    if not os.path.exists(markers_file):
-        return False
-
-    with open(markers_file, "r") as f:
-        markers = json.load(f)
+    markers = load_state().get("markers", [])
+    print(markers)
 
     for marker in markers:
         if marker["name"] == name:

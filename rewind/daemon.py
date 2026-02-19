@@ -5,16 +5,14 @@ import time
 import obsws_python as obs
 import subprocess
 import logging
-import json
 import shutil
 import signal
 
-from threading import Lock
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 from rewind.paths import load_config
 from rewind.core import mark, marker_exists, remove_marker
-from rewind.state import add_file_to_state, create_state_file_if_needed, cleanup_state_files
+from rewind.state import add_file_to_state, create_state_file_if_needed, cleanup_state
 
 running = True
 
@@ -59,7 +57,9 @@ def open_obs_connection(host: str, port: int, password: str) -> obs.ReqClient:
             con = obs.ReqClient(host=host, port=port, password=password)
         except ConnectionRefusedError:
             logger.info("OBS WebSocket not ready, retrying...")
-
+        except obs.events.OBSSDKError:
+            raise RuntimeError("Check OBS credentials")
+            
         if con:
             logger.info(f"Successfully connected to OBS at {host}:{port}")
             return con
@@ -93,23 +93,6 @@ def cleanup_physical_files(directory: str, max_age_seconds: int) -> None:
                 os.remove(file_path)
                 logger.info(f"Removed old file: {file_path}")
 
-def cleanup_markers(max_age_seconds: float) -> None:
-    markers_file = os.path.join(os.path.dirname(__file__), "markers.json")
-    if not os.path.exists(markers_file):
-        return
-
-    with open(markers_file, "r") as f:
-        markers = json.load(f)
-
-    current_time = datetime.datetime.now().timestamp()
-    new_markers = [m for m in markers if current_time - m['timestamp'] <= max_age_seconds]
-
-    with open(markers_file, "w") as f:
-        json.dump(new_markers, f, indent=4)
-
-    if new_markers != markers:
-        logger.info(f"Cleaning up {len(markers)-len(new_markers)} markers")
-
 class Handler(FileSystemEventHandler):
     def on_created(self, event):
         if event.is_directory:
@@ -139,8 +122,7 @@ def main() -> None:
 
         while running:
             cleanup_physical_files(recording_dir, config["record"]["max_record_time"])
-            cleanup_state_files()
-            cleanup_markers(config["record"]["max_record_time"])
+            cleanup_state(config["record"]["max_record_time"])
             time.sleep(INTERVAL)
     finally:
         if observer:
