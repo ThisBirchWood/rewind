@@ -71,27 +71,30 @@ def remove_marker_from_state(marker_name: str) -> None:
 
 def cleanup_state(max_age_seconds: float) -> None:
     state = load_state()
-    files = state.get("files", [])
-    markers = state.get("markers", [])
     now = datetime.datetime.now().timestamp()
 
-    # Remove files that do not exist
-    state["files"] = [
-        file for file in files 
-        if os.path.exists(file["path"])
+    files = state.get("files", [])
+    markers = state.get("markers", [])
+
+    # First filter by existence
+    files = [
+        f for f in files
+        if os.path.exists(f["path"])
     ]
 
-    # Remove files and markers beyond max age
-    state["files"] = [
-        file for file in files 
-        if now - file["timestamp"] <= max_age_seconds
+    # Then filter by age
+    files = [
+        f for f in files
+        if now - f["timestamp"] <= max_age_seconds
     ]
 
-
-    state["markers"] = [
-        marker for marker in markers
-        if now - marker["timestamp"] <= max_age_seconds
+    markers = [
+        m for m in markers
+        if now - m["timestamp"] <= max_age_seconds
     ]
+
+    state["files"] = files
+    state["markers"] = markers
 
     write_state(state)
 
