@@ -104,4 +104,4 @@ def cleanup_state(max_age_seconds: float) -> None:
 
 def create_state_file_if_needed() -> None:
     if not get_state_file_path().exists():
-        write_state(EMPTY_STATE)
+        write_state(EMPTY_STATE.copy())

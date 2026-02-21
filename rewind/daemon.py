@@ -33,11 +33,7 @@ def shutdown(signum, frame):
 signal.signal(signal.SIGINT, shutdown)
 signal.signal(signal.SIGTERM, shutdown)
 
-def open_obs():
-    kill_command = subprocess.run(['pkill', 'obs'])
-    if kill_command.returncode not in [0, 1]:
-        raise SystemError("Could not kill existing OBS instance")
-
+def clean_obs_sentinel_files():
     if os.path.exists(SENTINEL_FILE):
         try:
             shutil.rmtree(SENTINEL_FILE)
@@ -45,6 +41,14 @@ def open_obs():
         except Exception as e:
             logger.error(f"Could not delete OBS .sentinel directory: {e}")
 
+def is_obs_running():
+    result = subprocess.run(
+        ["pgrep", "-x", "obs"],
+        stdout=subprocess.PIPE
+    )
+    return result.returncode == 0
+
+def open_obs():
     # Using and not checking OBS since it needs to be non-blocking
     subprocess.Popen(["obs", "--minimize-to-tray"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
@@ -104,7 +108,13 @@ class Handler(FileSystemEventHandler):
         logger.info(f"Added new file to state: {event.src_path}")
 
 def main() -> None:
-    open_obs()
+    if is_obs_running():
+        logger.info("OBS is already running")
+    else:
+        logger.info("OBS is not running, starting it now")
+        clean_obs_sentinel_files()
+        open_obs()
+        
     config = load_config()
     con = open_obs_connection(config["obs"]["host"], config["obs"]["port"], config["obs"]["password"])
 
