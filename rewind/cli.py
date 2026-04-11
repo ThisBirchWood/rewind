@@ -9,8 +9,8 @@ def build_clip_parser(subparsers: argparse._SubParsersAction) -> None:
     clip_parser.add_argument(
         "-s", "--seconds",
         type=int,
-        default=30,
-        help="Number of seconds to include in the clip (default: 30)"
+        default=60,
+        help="Number of seconds to include in the clip (default: 60)"
     )
 
 def build_save_parser(subparsers: argparse._SubParsersAction) -> None:
