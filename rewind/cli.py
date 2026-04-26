@@ -3,6 +3,7 @@ import sys
 import argparse
 
 from rewind.core import clip, mark, save, print_markers
+from rewind.autostart import install
 
 def build_clip_parser(subparsers: argparse._SubParsersAction) -> None:
     clip_parser = subparsers.add_parser("clip", help="Clips the last 'x' seconds")
@@ -41,6 +42,13 @@ def build_mark_parser(subparsers: argparse._SubParsersAction) -> None:
 def build_list_parser(subparsers: argparse._SubParsersAction) -> None:
     list_parser = subparsers.add_parser("list", help="List all markers in the recording")
 
+def build_install_parser(subparsers: argparse._SubParsersAction):
+    subparsers.add_parser(
+        "install",
+        help="Enable background recording daemon",
+        description="Install and enable the rewind daemon using system autostart."
+    )
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="rewind",
@@ -53,6 +61,7 @@ def build_parser() -> argparse.ArgumentParser:
     build_mark_parser(sub)
     build_list_parser(sub)
     build_save_parser(sub)
+    build_install_parser(sub)
 
     return parser
 
@@ -69,6 +78,8 @@ def main(argv=None) -> int:
             print_markers()
         elif args.command == "save":
             save(args.start, args.end)
+        elif args.command == "install":
+            install()
         else:
             parser.error("Unknown command")
     except Exception as e:
