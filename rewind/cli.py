@@ -42,7 +42,7 @@ def build_mark_parser(subparsers: argparse._SubParsersAction) -> None:
 def build_list_parser(subparsers: argparse._SubParsersAction) -> None:
     list_parser = subparsers.add_parser("list", help="List all markers in the recording")
 
-def build_install_parser(subparsers: argparse._SubParsersAction):
+def build_install_parser(subparsers: argparse._SubParsersAction) -> None:
     subparsers.add_parser(
         "install",
         help="Enable background recording daemon",

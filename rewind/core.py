@@ -8,6 +8,9 @@ from rewind.paths import load_config
 from tqdm import tqdm
 
 def clip(seconds_from_end: float) -> None:
+    if seconds_from_end <= 0 or seconds_from_end > 600:
+        raise ValueError("Clip length must be positive and less than or equal to 10 minutes")
+
     clip_output = os.path.expanduser(load_config()["record"]["clip_output"])
     os.makedirs(clip_output, exist_ok=True)
 
@@ -33,11 +36,11 @@ def save(first_marker: str, second_marker: str):
     first_timestamp = get_marker_timestamp(first_marker)
     second_timestamp = get_marker_timestamp(second_marker)
 
-    output_file_name = f"{datetime.datetime.fromtimestamp(first_timestamp).strftime('%Y-%m-%d_%H:%M:%S')}-[{first_marker}-{second_marker}].mp4"
-    output_path = os.path.join(vod_dir, output_file_name)
-
     if first_timestamp >= second_timestamp:
         raise ValueError("First marker must be before second marker")
+
+    output_file_name = f"{datetime.datetime.fromtimestamp(first_timestamp).strftime('%Y-%m-%d_%H:%M:%S')}-[{first_marker}-{second_marker}].mp4"
+    output_path = os.path.join(vod_dir, output_file_name)
 
     files, start_offset, end_offset = _get_ts_files(
         first_timestamp,
