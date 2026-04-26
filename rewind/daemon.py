@@ -8,22 +8,23 @@ import logging
 import shutil
 import signal
 
+from pathlib import Path
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
-from rewind.paths import load_config
+from rewind.paths import load_config, get_state_dir
 from rewind.core import mark, marker_exists, remove_marker
 from rewind.state import add_file_to_state, create_state_file_if_needed, cleanup_state
 
 running = True
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-logging.basicConfig(format="%(levelname)s:%(name)s:%(message)s")
-logging.getLogger("obsws_python").setLevel(logging.CRITICAL)
-
+LOG_FILE =  get_state_dir() / "daemon.log"
 INTERVAL = 10
 SENTINEL_FILE = os.path.expanduser("~/.config/obs-studio/.sentinel")
 OBS_MAX_RETRIES = 10
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+logging.basicConfig(format="%(levelname)s:%(name)s:%(message)s", handlers=[logging.FileHandler(LOG_FILE), logging.StreamHandler()])
+logging.getLogger("obsws_python").setLevel(logging.CRITICAL)
 
 def shutdown(signum, frame):
     global running
