@@ -100,7 +100,7 @@ def main(argv=None) -> int:
             elif args.config_command == "get":
                 print(cfg.get(args.key))
             else:
-                cfg.show()
+                parser.error("Unknown config command: expected 'get' or 'set'")
         else:
             parser.error("Unknown command")
     except Exception as e:

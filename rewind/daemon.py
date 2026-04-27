@@ -88,7 +88,7 @@ class Handler(FileSystemEventHandler):
 
 def main() -> None:
     config = Config()
-    con = open_obs_connection(config.obs_host, config.obs_port, config.obs_password, OBS_MAX_RETRIES)
+    con = open_obs_connection(config.get_obs_host(), config.get_obs_port(), config.get_obs_password(), OBS_MAX_RETRIES)
 
     recording_dir = con.get_record_directory().record_directory
     start_recording(con)
@@ -103,8 +103,8 @@ def main() -> None:
         observer.start()
 
         while running:
-            cleanup_physical_files(recording_dir, config.max_record_time)
-            cleanup_state(config.max_record_time)
+            cleanup_physical_files(recording_dir, config.get_max_record_time())
+            cleanup_state(config.get_max_record_time())
             time.sleep(INTERVAL)
     finally:
         if observer:
