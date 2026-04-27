@@ -97,7 +97,7 @@ get_duration() is used as little as possible since it is slow.
 end_timestamp of a file is the start time of the next file.
 """
 def _get_ts_files(start_timestamp: float, end_timestamp: float) -> tuple[list[str], float, float]:
-    ts_files = load_state()["files"]
+    ts_files = [f for f in load_state()["files"] if os.path.exists(f["path"])]
     selected_files = []
     start_offset = 0.0
     end_offset = 0.0
@@ -184,10 +184,11 @@ def get_duration(file_path: str) -> float:
          "format=duration", "-of",
          "default=noprint_wrappers=1:nokey=1", file_path],
         stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT
+        stderr=subprocess.PIPE,
+        text=True,
     )
 
     if result.returncode != 0:
         raise RuntimeError(f"ffprobe failed for file {file_path}")
 
-    return float(result.stdout)
+    return float(result.stdout.strip())
