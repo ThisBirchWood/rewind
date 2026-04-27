@@ -3,14 +3,13 @@ import os
 import datetime
 import time
 import obsws_python as obs
-import subprocess
 import logging
-import shutil
 import signal
 
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
-from rewind.paths import load_config, get_state_dir
+from rewind.paths import get_state_dir
+from rewind.config import Config
 from rewind.core import mark, marker_exists, remove_marker
 from rewind.state import add_file_to_state, create_state_file_if_needed, cleanup_state
 
@@ -18,7 +17,7 @@ running = True
 LOG_FILE =  get_state_dir() / "daemon.log"
 INTERVAL = 10
 SENTINEL_FILE = os.path.expanduser("~/.config/obs-studio/.sentinel")
-OBS_MAX_RETRIES = 10
+OBS_MAX_RETRIES = 5
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -32,25 +31,6 @@ def shutdown(signum, frame):
 
 signal.signal(signal.SIGINT, shutdown)
 signal.signal(signal.SIGTERM, shutdown)
-
-def clean_obs_sentinel_files():
-    if os.path.exists(SENTINEL_FILE):
-        try:
-            shutil.rmtree(SENTINEL_FILE)
-            logger.info("Removed existing OBS .sentinel directory")
-        except Exception as e:
-            logger.error(f"Could not delete OBS .sentinel directory: {e}")
-
-def is_obs_running():
-    result = subprocess.run(
-        ["pgrep", "-x", "obs"],
-        stdout=subprocess.PIPE
-    )
-    return result.returncode == 0
-
-def open_obs():
-    # Using and not checking OBS since it needs to be non-blocking
-    subprocess.Popen(["obs", "--minimize-to-tray"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 def open_obs_connection(host: str, port: int, password: str, obs_max_retries: int) -> obs.ReqClient:
     con = None
@@ -107,15 +87,8 @@ class Handler(FileSystemEventHandler):
         add_file_to_state(event.src_path)
 
 def main() -> None:
-    if is_obs_running():
-        logger.info("OBS is already running")
-    else:
-        logger.info("OBS is not running, starting it now")
-        clean_obs_sentinel_files()
-        open_obs()
-        
-    config = load_config()
-    con = open_obs_connection(config["obs"]["host"], config["obs"]["port"], config["obs"]["password"], OBS_MAX_RETRIES)
+    config = Config()
+    con = open_obs_connection(config.obs_host, config.obs_port, config.obs_password, OBS_MAX_RETRIES)
 
     recording_dir = con.get_record_directory().record_directory
     start_recording(con)
@@ -130,8 +103,8 @@ def main() -> None:
         observer.start()
 
         while running:
-            cleanup_physical_files(recording_dir, config["record"]["max_record_time"])
-            cleanup_state(config["record"]["max_record_time"])
+            cleanup_physical_files(recording_dir, config.max_record_time)
+            cleanup_state(config.max_record_time)
             time.sleep(INTERVAL)
     finally:
         if observer:

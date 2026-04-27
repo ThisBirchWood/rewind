@@ -4,14 +4,14 @@ import datetime
 import subprocess
 
 from rewind.state import load_state, add_marker_to_state, remove_marker_from_state
-from rewind.paths import load_config
+from rewind.config import Config
 from tqdm import tqdm
 
 def clip(seconds_from_end: float) -> None:
     if seconds_from_end <= 0 or seconds_from_end > 600:
         raise ValueError("Clip length must be positive and less than or equal to 10 minutes")
 
-    clip_output = os.path.expanduser(load_config()["record"]["clip_output"])
+    clip_output = Config().clip_output
     os.makedirs(clip_output, exist_ok=True)
 
     output_file_name = f"{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}.mp4"
@@ -30,7 +30,7 @@ def clip(seconds_from_end: float) -> None:
     print(f"Created clip: {output_path}")
 
 def save(first_marker: str, second_marker: str):
-    vod_dir = os.path.expanduser(load_config()["record"]["vod_output"])
+    vod_dir = Config().vod_output
     os.makedirs(vod_dir, exist_ok=True)
 
     first_timestamp = get_marker_timestamp(first_marker)
