@@ -2,9 +2,12 @@
 import datetime
 import json
 import os
+import logging
 
 from pathlib import Path
 from rewind.paths import get_state_dir
+
+logger = logging.getLogger(__name__)
 
 STATE_NAME = "state.json"
 EMPTY_STATE = {
@@ -49,6 +52,8 @@ def add_file_to_state(file_path: str) -> None:
     state["files"] = files
     write_state(state)
 
+    logger.info(f"Added new file to state: {file_path}")
+
 def add_marker_to_state(marker_name: str) -> None:
     state = load_state()
     markers = state.get("markers", [])
@@ -65,6 +70,8 @@ def add_marker_to_state(marker_name: str) -> None:
     state["markers"] = markers
     write_state(state)
 
+    logger.info(f"Added new marker to state: {marker_name}")
+
 def remove_marker_from_state(marker_name: str) -> None:
     state = load_state()
     markers = state.get("markers", [])
@@ -72,6 +79,8 @@ def remove_marker_from_state(marker_name: str) -> None:
 
     state["markers"] = markers
     write_state(state)
+
+    logger.info(f"Removed marker from state: {marker_name}")
 
 def cleanup_state(max_age_seconds: float) -> None:
     state = load_state()

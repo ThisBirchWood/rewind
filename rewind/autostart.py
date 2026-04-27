@@ -27,15 +27,14 @@ def _install_linux(program_path: str):
     obs_service = systemd_dir / "obs.service"
     daemon_service = systemd_dir / "rewind-daemon.service"
 
-    if obs_service.exists():
-        print("obs.service already exists, skipping creation")
-    else:
-        obs_service.write_text("""[Unit]
+    obs_service.write_text("""[Unit]
 Description=OBS Studio
 After=graphical-session.target
 Wants=graphical-session.target
 
 [Service]
+# Ensure OBS sentinel files are cleaned up before starting the daemon
+ExecStartPre=-/usr/bin/rm -rf %h/.config/obs-studio/.sentinel
 ExecStart=obs --minimize-to-tray
 Restart=on-failure
 RestartSec=3
@@ -44,10 +43,7 @@ RestartSec=3
 WantedBy=default.target
 """)
 
-    if daemon_service.exists():
-        print("rewind-daemon.service already exists, skipping creation")
-    else:
-        daemon_service.write_text(f"""[Unit]
+    daemon_service.write_text(f"""[Unit]
 Description=Rewind Daemon
 After=obs.service
 Requires=obs.service

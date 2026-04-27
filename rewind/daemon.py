@@ -8,7 +8,6 @@ import logging
 import shutil
 import signal
 
-from pathlib import Path
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 from rewind.paths import load_config, get_state_dir
@@ -53,11 +52,11 @@ def open_obs():
     # Using and not checking OBS since it needs to be non-blocking
     subprocess.Popen(["obs", "--minimize-to-tray"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-def open_obs_connection(host: str, port: int, password: str) -> obs.ReqClient:
+def open_obs_connection(host: str, port: int, password: str, obs_max_retries: int) -> obs.ReqClient:
     con = None
     init_sleep = 1
 
-    for _ in range(OBS_MAX_RETRIES):
+    for _ in range(obs_max_retries):
         try:
             con = obs.ReqClient(host=host, port=port, password=password)
         except ConnectionRefusedError:
@@ -106,7 +105,6 @@ class Handler(FileSystemEventHandler):
             return
 
         add_file_to_state(event.src_path)
-        logger.info(f"Added new file to state: {event.src_path}")
 
 def main() -> None:
     if is_obs_running():
@@ -117,7 +115,7 @@ def main() -> None:
         open_obs()
         
     config = load_config()
-    con = open_obs_connection(config["obs"]["host"], config["obs"]["port"], config["obs"]["password"])
+    con = open_obs_connection(config["obs"]["host"], config["obs"]["port"], config["obs"]["password"], OBS_MAX_RETRIES)
 
     recording_dir = con.get_record_directory().record_directory
     start_recording(con)

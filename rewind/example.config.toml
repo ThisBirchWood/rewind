@@ -1,7 +1,7 @@
 [obs]
 host = "localhost"
 port = 4455
-password = "6BQWrpHLbyJxNLPJ"
+password = ""
 
 [record]
 max_record_time = 28800
