@@ -21,7 +21,7 @@ def get_state_file_path() -> Path:
 def load_state() -> dict:
     path = get_state_file_path()
     if not path.exists():
-        return EMPTY_STATE.copy()
+        return {"files": [], "markers": []}
 
     with path.open() as f:
         return json.load(f)
