@@ -4,6 +4,7 @@ import argparse
 
 from rewind.core import clip, mark, save, print_markers
 from rewind.autostart import install
+from rewind.config import Config
 
 def build_clip_parser(subparsers: argparse._SubParsersAction) -> None:
     clip_parser = subparsers.add_parser("clip", help="Clips the last 'x' seconds")
@@ -49,6 +50,17 @@ def build_install_parser(subparsers: argparse._SubParsersAction) -> None:
         description="Install and enable the rewind daemon using system autostart."
     )
 
+def build_config_parser(subparsers: argparse._SubParsersAction) -> None:
+    config_parser = subparsers.add_parser("config", help="View or edit config values")
+    config_sub = config_parser.add_subparsers(dest="config_command")
+
+    get_parser = config_sub.add_parser("get", help="Print a single config value")
+    get_parser.add_argument("key", help="Dotted key, e.g. obs.host")
+
+    set_parser = config_sub.add_parser("set", help="Update a config value")
+    set_parser.add_argument("key", help="Dotted key, e.g. obs.host")
+    set_parser.add_argument("value", help="New value")
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="rewind",
@@ -62,12 +74,14 @@ def build_parser() -> argparse.ArgumentParser:
     build_list_parser(sub)
     build_save_parser(sub)
     build_install_parser(sub)
+    build_config_parser(sub)
 
     return parser
 
 def main(argv=None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
+    cfg = Config()
 
     try:
         if args.command == "clip":
@@ -80,6 +94,13 @@ def main(argv=None) -> int:
             save(args.start, args.end)
         elif args.command == "install":
             install()
+        elif args.command == "config":
+            if args.config_command == "set":
+                cfg.set(args.key, args.value)
+            elif args.config_command == "get":
+                print(cfg.get(args.key))
+            else:
+                cfg.show()
         else:
             parser.error("Unknown command")
     except Exception as e:

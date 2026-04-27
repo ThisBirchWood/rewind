@@ -81,3 +81,24 @@ class Config:
     def vod_output(self, value: str) -> None:
         self._data["record"]["vod_output"] = value
         self._save()
+
+    def get(self, key: str) -> str:
+        section, _, field = key.partition(".")
+        try:
+            return str(self._data[section][field])
+        except KeyError:
+            raise KeyError(f"Unknown config key: {key!r}")
+
+    def set(self, key: str, value: str) -> None:
+        section, _, field = key.partition(".")
+        try:
+            current = self._data[section][field]
+        except KeyError:
+            raise KeyError(f"Unknown config key: {key!r}")
+        self._data[section][field] = type(current)(value)
+        self._save()
+
+    def show(self) -> None:
+        for section, values in self._data.items():
+            for field, value in values.items():
+                print(f"{section}.{field} = {value!r}")
