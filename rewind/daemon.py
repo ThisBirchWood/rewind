@@ -16,7 +16,6 @@ from rewind.state import add_file_to_state, create_state_file_if_needed, cleanup
 running = True
 LOG_FILE =  get_state_dir() / "daemon.log"
 INTERVAL = 10
-SENTINEL_FILE = os.path.expanduser("~/.config/obs-studio/.sentinel")
 OBS_MAX_RETRIES = 5
 
 logger = logging.getLogger(__name__)
