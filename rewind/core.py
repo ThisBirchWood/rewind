@@ -14,7 +14,7 @@ def clip(seconds_from_end: float) -> None:
     if seconds_from_end <= 0 or seconds_from_end > 600:
         raise ValueError("Clip length must be positive and less than or equal to 10 minutes")
 
-    clip_output = Config().get_clip_output()
+    clip_output = config.get_clip_output()
     os.makedirs(clip_output, exist_ok=True)
 
     output_file_name = f"{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}.mp4"
