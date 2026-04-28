@@ -3,7 +3,7 @@ import sys
 import argparse
 
 from rewind.core import clip, mark, save, print_markers
-from rewind.autostart import install
+from rewind.autostart.main import enable_autostart, disable_autostart, start_daemon, stop_daemon
 from rewind.config import Config
 
 def build_clip_parser(subparsers: argparse._SubParsersAction) -> None:
@@ -43,12 +43,14 @@ def build_mark_parser(subparsers: argparse._SubParsersAction) -> None:
 def build_list_parser(subparsers: argparse._SubParsersAction) -> None:
     list_parser = subparsers.add_parser("list", help="List all markers in the recording")
 
-def build_install_parser(subparsers: argparse._SubParsersAction) -> None:
-    subparsers.add_parser(
-        "install",
-        help="Enable background recording daemon",
-        description="Install and enable the rewind daemon using system autostart."
-    )
+def build_daemon_parser(subparsers: argparse._SubParsersAction) -> None:
+    daemon_parser = subparsers.add_parser("daemon", help="Control the rewind daemon")
+    daemon_sub = daemon_parser.add_subparsers(dest="daemon_command")
+    daemon_sub.add_parser("start", help="Start the daemon")
+    daemon_sub.add_parser("stop", help="Stop the daemon")
+    daemon_sub.add_parser("enable", help="Enable autostart for the daemon")
+    daemon_sub.add_parser("disable", help="Disable autostart for the daemon")
+
 
 def build_config_parser(subparsers: argparse._SubParsersAction) -> None:
     config_parser = subparsers.add_parser("config", help="View or edit config values")
@@ -73,7 +75,7 @@ def build_parser() -> argparse.ArgumentParser:
     build_mark_parser(sub)
     build_list_parser(sub)
     build_save_parser(sub)
-    build_install_parser(sub)
+    build_daemon_parser(sub)
     build_config_parser(sub)
 
     return parser
@@ -92,8 +94,17 @@ def main(argv=None) -> int:
             print_markers()
         elif args.command == "save":
             save(args.start, args.end)
-        elif args.command == "install":
-            install()
+        elif args.command == "daemon":
+            if args.daemon_command == "start":
+                start_daemon()
+            elif args.daemon_command == "stop":
+                stop_daemon()
+            elif args.daemon_command == "enable":
+                enable_autostart()
+            elif args.daemon_command == "disable":
+                disable_autostart()
+            else:
+                parser.error("Unknown daemon command: expected 'start' or 'stop'")
         elif args.command == "config":
             if args.config_command == "set":
                 cfg.set(args.key, args.value)
