@@ -36,7 +36,7 @@ def build_mark_parser(subparsers: argparse._SubParsersAction) -> None:
     mark_parser.add_argument(
         "-n", "--name",
         type=str,
-        required=True,
+        required=False,
         help="Name of the marker"
     )
 

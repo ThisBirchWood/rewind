@@ -55,7 +55,7 @@ def save(first_marker: str, second_marker: str):
 
 def mark(name: str) -> None:
     if not name:
-        raise ValueError("Marker name cannot be empty")
+        name = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     
     add_marker_to_state(name)
     print(f"Added marker: {name}")
