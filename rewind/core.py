@@ -22,7 +22,9 @@ def clip(seconds_from_end: float) -> None:
     end_timestamp = datetime.datetime.now().timestamp()
     length = end_timestamp - start_timestamp
     
+    ts_files = [f for f in load_state()["files"] if os.path.exists(f["path"])]
     files, start_offset, end_offset = get_ts_files(
+        ts_files,
         start_timestamp,
         end_timestamp
     )
@@ -43,7 +45,10 @@ def save(first_marker: str, second_marker: str):
     output_file_name = f"{datetime.datetime.fromtimestamp(first_timestamp).strftime('%Y-%m-%d_%H:%M:%S')}-[{first_marker}-{second_marker}].mp4"
     output_path = os.path.join(vod_dir, output_file_name)
 
+    ts_files = [f for f in load_state()["files"] if os.path.exists(f["path"])]
+
     files, start_offset, end_offset = get_ts_files(
+        ts_files,
         first_timestamp,
         second_timestamp
     )

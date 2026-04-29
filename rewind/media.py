@@ -11,8 +11,11 @@ Returns a list of file paths and extra start and end offsets if needed.
 get_duration() is used as little as possible since it is slow.
 end_timestamp of a file is the start time of the next file.
 """
-def get_ts_files(start_timestamp: float, end_timestamp: float) -> tuple[list[str], float, float]:
-    ts_files = [f for f in load_state()["files"] if os.path.exists(f["path"])]
+def get_ts_files(
+        ts_files: list[dict],
+        start_timestamp: float, 
+        end_timestamp: float
+        ) -> tuple[list[str], float, float]:
     selected_files = []
     start_offset = 0.0
     end_offset = 0.0
@@ -20,7 +23,7 @@ def get_ts_files(start_timestamp: float, end_timestamp: float) -> tuple[list[str
     for i, file_info in enumerate(ts_files):
         file_start = file_info["timestamp"]
         file_end = ts_files[i + 1]["timestamp"] if i + 1 < len(ts_files) else get_duration(file_info["path"]) + file_start
-
+        
         if file_end <= start_timestamp:
             continue
         if file_start >= end_timestamp:
@@ -28,11 +31,13 @@ def get_ts_files(start_timestamp: float, end_timestamp: float) -> tuple[list[str
 
         selected_files.append(file_info["path"])
 
-        if file_start <= start_timestamp < file_end:
+        if file_start < start_timestamp:
             start_offset = start_timestamp - file_start
-        if file_start < end_timestamp <= file_end:
-            end_offset = file_end - end_timestamp
 
+        if file_end >= end_timestamp:
+            end_offset = file_end - end_timestamp
+            break
+        
     return selected_files, start_offset, end_offset
 
 def concat_ts_files(file_list: list[str], start_offset: float, end_offset: float, length: float, output_file: str) -> None:
