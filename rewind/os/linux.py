@@ -1,9 +1,9 @@
 import subprocess
 
 from pathlib import Path
-from rewind.autostart.autostart_backend import AutostartBackend
+from rewind.os.backend import OSBackend
 
-class LinuxBackend(AutostartBackend):
+class LinuxBackend(OSBackend):
     def __init__(self, program_path: str):
         super().__init__(program_path)
 

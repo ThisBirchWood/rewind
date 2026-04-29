@@ -2,7 +2,7 @@
 import platform
 import shutil
 
-from rewind.autostart.linux import LinuxBackend
+from rewind.os.linux import LinuxBackend
 
 APP_NAME = "rewind-daemon"
 

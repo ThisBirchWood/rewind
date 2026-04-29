@@ -3,7 +3,7 @@ import sys
 import argparse
 
 from rewind.core import clip, mark, save, print_markers
-from rewind.autostart.main import enable_autostart, disable_autostart, start_daemon, stop_daemon
+from rewind.os.main import enable_autostart, disable_autostart, start_daemon, stop_daemon
 from rewind.config import Config
 
 def build_clip_parser(subparsers: argparse._SubParsersAction) -> None:

@@ -1,4 +1,4 @@
-class AutostartBackend:
+class OSBackend:
     def __init__(self, program_path: str):
         self.program_path = program_path
 
