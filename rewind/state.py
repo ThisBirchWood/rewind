@@ -37,7 +37,7 @@ def write_state(state: dict) -> None:
 
 def add_file_to_state(file_path: str) -> None:
     state = load_state()
-    files = state.get("files", [])
+    files = sorted(state.get("files", []), key=lambda f: f["timestamp"])
 
     # Idempotency guard
     existing_paths = {f["path"] for f in files}
@@ -46,7 +46,7 @@ def add_file_to_state(file_path: str) -> None:
 
     files.append({
         "path": file_path,
-        "timestamp": datetime.datetime.now().timestamp(),
+        "timestamp": datetime.datetime.now().timestamp()
     })
 
     state["files"] = files
