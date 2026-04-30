@@ -6,8 +6,6 @@ import obsws_python as obs
 import logging
 import signal
 
-from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler
 from rewind.paths import get_state_dir
 from rewind.config import Config
 from rewind.core import mark, marker_exists, remove_marker
@@ -31,21 +29,26 @@ def shutdown(signum, frame):
 signal.signal(signal.SIGINT, shutdown)
 signal.signal(signal.SIGTERM, shutdown)
 
-def open_obs_connection(host: str, port: int, password: str, obs_max_retries: int) -> obs.ReqClient:
-    con = None
+def open_obs_connection(host: str, port: int, password: str, obs_max_retries: int) -> dict[str, obs.ReqClient | obs.EventClient]:
+    req = None
+    event = None
     init_sleep = 1
 
     for _ in range(obs_max_retries):
         try:
-            con = obs.ReqClient(host=host, port=port, password=password)
+            req = obs.ReqClient(host=host, port=port, password=password)
+            event = obs.EventClient(host=host, port=port, password=password)
         except ConnectionRefusedError:
             logger.info("OBS WebSocket not ready, retrying...")
         except obs.events.OBSSDKError:
             raise RuntimeError("Check OBS credentials")
             
-        if con:
+        if req and event:
             logger.info(f"Successfully connected to OBS at {host}:{port}")
-            return con
+            return {
+                "req": req,
+                "event": event
+            }
 
         time.sleep(init_sleep)
         init_sleep *= 2
@@ -76,42 +79,37 @@ def cleanup_physical_files(directory: str, max_age_seconds: int) -> None:
                 os.remove(file_path)
                 logger.info(f"Removed old file: {file_path}")
 
-class Handler(FileSystemEventHandler):
-    def on_created(self, event):
-        if event.is_directory:
-            return
-        if not event.src_path.endswith(".ts"):
-            return
-
-        add_file_to_state(event.src_path)
+def on_record_file_changed(event) -> None:
+    new_file = event.new_output_path
+    add_file_to_state(new_file)
 
 def main() -> None:
     config = Config()
-    con = open_obs_connection(config.get_obs_host(), config.get_obs_port(), config.get_obs_password(), OBS_MAX_RETRIES)
+    obs_host = config.get_obs_host()
+    obs_port = config.get_obs_port()
+    obs_password = config.get_obs_password()
 
-    recording_dir = con.get_record_directory().record_directory
-    start_recording(con)
+    connections = open_obs_connection(obs_host, obs_port, obs_password, OBS_MAX_RETRIES)
+    req_con = connections["req"]
+    event_con = connections["event"]
+
+    event_con.callback.register(on_record_file_changed)
+
+    recording_dir = req_con.get_record_directory().record_directory
+    start_recording(req_con)
 
     create_state_file_if_needed()
     create_initial_marker()
 
     try:
-        event_handler = Handler()
-        observer = Observer()
-        observer.schedule(event_handler, path=recording_dir, recursive=False)
-        observer.start()
-
         while running:
             cleanup_physical_files(recording_dir, config.get_max_record_time())
             cleanup_state(config.get_max_record_time())
             time.sleep(INTERVAL)
     finally:
-        if observer:
-            observer.stop()
-            observer.join()
-
-        stop_recording(con)
-        con.disconnect()
+        stop_recording(req_con)
+        event_con.disconnect()
+        req_con.disconnect()
         logger.info("Daemon stopped")
 
 if __name__ == "__main__":
